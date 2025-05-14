@@ -151,7 +151,7 @@ body,														/* body														*/
 .container-lRFx4q {background: transparent !important;}
 
 #app-mount .image-3zK3Wt {									/* app					errorscreen image					*/
-	background-image: url("https://vsthemes.org/uploads/posts/2021-02/1614457909_oboj-1.webp");
+	background-image: url(https://vsthemes.org/uploads/posts/2021-02/1614457909_oboj-1.webp);
 	opacity: 0.6;
 }
 
@@ -2753,7 +2753,7 @@ body::before {
 	background-color: rgba(var(--vtransparencycolor), 0.4);
 }
 #app-mount .footerImage-4UrEF0 {
-    background-image: url("https://vsthemes.org/uploads/posts/2021-02/1614457909_oboj-1.webp");
+    background-image: url(https://vsthemes.org/uploads/posts/2021-02/1614457909_oboj-1.webp);
 	opacity: 0.6;
 }
 
@@ -3907,7 +3907,7 @@ body::before {
 
 #app-mount .ctaBar-2UsjF2 {									/* current boost stats	container							*/
 	background-color: rgba(var(--vtransparencycolor), 0.4);
-	background-image: url("https://vsthemes.org/uploads/posts/2021-02/1614457909_oboj-1.webp");
+	background-image: url(https://vsthemes.org/uploads/posts/2021-02/1614457909_oboj-1.webp);
 }
 .guildIcon-3raYf3 {											/* current boost stats	guild icon							*/
 	background-color: rgba(var(--vtransparencycolor), 0.2);
@@ -4945,7 +4945,7 @@ body::before {
 	color: rgb(var(--fontwhite3));
 }
 #app-mount .endContainer-1ZDW8j::after {
-	background-image: url("https://vsthemes.org/uploads/posts/2021-02/1614457909_oboj-1.webp");
+	background-image: url(https://vsthemes.org/uploads/posts/2021-02/1614457909_oboj-1.webp);
 	opacity: 0.6;
 }
 
@@ -6998,7 +6998,7 @@ html .bd-toast {
 	text-shadow: 1px 1px var(--vtextshadow);
 }
 html .bd-toast.icon {
-	background-image: url ("https://vsthemes.org/uploads/posts/2021-02/1614457909_oboj-1.webp") !important;
+	background-image: url("https://vsthemes.org/uploads/posts/2021-02/1614457909_oboj-1.webp") !important;
 }
 html .bd-toast.icon::before {
 	content: "";
@@ -7957,7 +7957,7 @@ body::before,
 	background-color: rgba(var(--vtransparencycolor), var(--vtransparencyalpha));
 }
 .appMount-2yBXZl {
-	background-image: url ("https://vsthemes.org/uploads/posts/2021-02/1614457909_oboj-1.webp") !important;
+	background-image: url("https://vsthemes.org/uploads/posts/2021-02/1614457909_oboj-1.webp") !important;
 	background-size: cover !important;
 }
 
