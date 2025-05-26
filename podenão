@@ -23,6 +23,8 @@
   --darkplus-sec: #bb86fc;
   --darkplus-links: #cdaef3;
   --darkplus-home-icon: url(https://raw.githubusercontent.com/BielZzx9/pdn-o/refs/heads/main/Captura%20de%20tela%202025-04-25%20023343.png);
+  --background-image: url(https://raw.githubusercontent.com/BielZzx9/pdn-o/refs/heads/main/wallhaven-rdj11m.jpg) !important;
+  --background-size: cover !important;
   --watermark-filter-invert: 0%;
   --watermark-filter-sepia: 50%;
   --watermark-filter-saturate: 3000%;
