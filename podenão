@@ -1,19 +1,5 @@
 /*
- ________  ________  ________  ___  __    ________  ___       ___  ___  ________                         
-|\   ___ \|\   __  \|\   __  \|\  \|\  \ |\   __  \|\  \     |\  \|\  \|\   ____\                        
-\ \  \_|\ \ \  \|\  \ \  \|\  \ \  \/  /|\ \  \|\  \ \  \    \ \  \\\  \ \  \___|_                       
- \ \  \ \\ \ \   __  \ \   _  _\ \   ___  \ \   ____\ \  \    \ \  \\\  \ \_____  \                      
-  \ \  \_\\ \ \  \ \  \ \  \\  \\ \  \\ \  \ \  \___|\ \  \____\ \  \\\  \|____|\  \                     
-   \ \_______\ \__\ \__\ \__\\ _\\ \__\\ \__\ \__\    \ \_______\ \_______\____\_\  \                    
-    \|_______|\|__|\|__|\|__|\|__|\|__| \|__|\|__|     \|_______|\|_______|\_________\                   
-                                                                          \|_________|                                                                                                                    
- ________      ___    ___      ________  _______   ___      ___ _______   ___      ___ ___  ___          
-|\   __  \    |\  \  /  /|    |\   ___ \|\  ___ \ |\  \    /  /|\  ___ \ |\  \    /  /|\  \|\  \         
-\ \  \|\ /_   \ \  \/  / /    \ \  \_|\ \ \   __/|\ \  \  /  / | \   __/|\ \  \  /  / | \  \ \  \        
- \ \   __  \   \ \    / /      \ \  \ \\ \ \  \_|/_\ \  \/  / / \ \  \_|/_\ \  \/  / / \ \  \ \  \       
-  \ \  \|\  \   \/  /  /        \ \  \_\\ \ \  \_|\ \ \    / /   \ \  \_|\ \ \    / /   \ \  \ \  \____  
-   \ \_______\__/  / /           \ \_______\ \_______\ \__/ /     \ \_______\ \__/ /     \ \__\ \_______\
-    \|_______|\___/ /             \|_______|\|_______|\|__|/       \|_______|\|__|/       \|__|\|_______|
+
              \|___|/                                                                                     
 */
 
@@ -23,14 +9,18 @@
   --darkplus-sec: #bb86fc;
   --darkplus-links: #cdaef3;
   --darkplus-home-icon: url(https://raw.githubusercontent.com/BielZzx9/pdn-o/refs/heads/main/Captura%20de%20tela%202025-04-25%20023343.png);
-  --background-image: url(https://raw.githubusercontent.com/BielZzx9/pdn-o/refs/heads/main/wallhaven-rdj11m.jpg) !important;
-  --background-size: cover !important;
   --watermark-filter-invert: 0%;
   --watermark-filter-sepia: 50%;
   --watermark-filter-saturate: 3000%;
   --watermark-filter-hue-rotate: 210deg;
   --watermark-filter-brightness: 70%;
   --watermark-filter-contrast: 200%;
+}
+
+body {
+  background-image: url(https://raw.githubusercontent.com/BielZzx9/pdn-o/refs/heads/main/wallhaven-rdj11m.jpg);
+  background-size: cover;
+  background-position: center;
 }
 
 .bg__960e4,
