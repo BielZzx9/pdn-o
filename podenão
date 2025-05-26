@@ -1,5 +1,4 @@
 /*
-
              \|___|/                                                                                     
 */
 
@@ -9,6 +8,8 @@
   --darkplus-sec: #bb86fc;
   --darkplus-links: #cdaef3;
   --darkplus-home-icon: url(https://raw.githubusercontent.com/BielZzx9/pdn-o/refs/heads/main/Captura%20de%20tela%202025-04-25%20023343.png);
+  --background-image: url(https://raw.githubusercontent.com/BielZzx9/pdn-o/refs/heads/main/wallhaven-rdj11m.jpg) !important;
+  --background-size: cover !important;
   --watermark-filter-invert: 0%;
   --watermark-filter-sepia: 50%;
   --watermark-filter-saturate: 3000%;
@@ -17,12 +18,17 @@
   --watermark-filter-contrast: 200%;
 }
 
+/* NOVA ADIÇÃO: Aplica o wallpaper em todo o body */
 body {
-  background-image: url(https://raw.githubusercontent.com/BielZzx9/pdn-o/refs/heads/main/wallhaven-rdj11m.jpg);
-  background-size: cover;
-  background-position: center;
+  background-image: var(--background-image) !important;
+  background-size: var(--background-size) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  background-position: center center !important;
 }
 
+/* --------------- */
+/* O restante do código do tema permanece inalterado */
 .bg__960e4,
 .container_a2f514 {
   background-color: var(--darkplus-bg);
@@ -43,6 +49,8 @@ body {
 .sidebarRegion__23e6b {
   background-color: var(--darkplus-bg) !important;
 }
+
+/* ... resto do código original ... */
 
 .searchBar__35e86 {
   background-color: var(--darkplus-bg);
