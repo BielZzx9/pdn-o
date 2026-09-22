@@ -7871,3 +7871,25 @@ html > body div > div > div > div > div > div.sidebar__409aa > div.navScroller__
 	transform: unset !important;
 	animation: unset !important;
 }
+
+/* ~~~~		CUSTOM BIEL: ESCONDER BOTAO VOLTAR + WATERMARKS		~~~~ */
+
+/* botao de voltar/avancar da barra de titulo (PT-BR e EN) */
+.bar_c38106 [aria-label="Voltar"],
+.bar_c38106 [aria-label="Avançar"],
+.bar_c38106 [aria-label="Back"],
+.bar_c38106 [aria-label="Forward"] {
+	display: none !important;
+}
+
+/* texto "DISCORD" (logo) e "BASICBACKGROUND BY DEVILBRO" da barra de titulo */
+.bar_c38106 .title_c38106::before,
+.bar_c38106 .title_c38106::after {
+	display: none !important;
+}
+
+/* texto escondido "BasicBackground by DevilBro" no rodape das configuracoes */
+.sidebar__409aa .nav__409aa::before,
+.sidebar__409aa .nav__409aa::after {
+	display: none !important;
+}
