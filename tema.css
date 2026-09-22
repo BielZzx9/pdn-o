@@ -7882,13 +7882,25 @@ html > body div > div > div > div > div > div.sidebar__409aa > div.navScroller__
 	display: none !important;
 }
 
-/* texto "DISCORD" (logo) e "BASICBACKGROUND BY DEVILBRO" da barra de titulo */
-.bar_c38106 .title_c38106::before,
-.bar_c38106 .title_c38106::after {
+/* watermarks do DevilBro: seletores EXATOS do original p/ empatar a especificidade
+   (nosso bloco vem depois no arquivo, entao o nosso display:none vence) */
+
+/* logo "DISCORD" (::before) e "BASICBACKGROUND BY DEVILBRO" quase invisivel (::after, opacity 0.1) da barra de titulo */
+html:only-child > head + body div.bar_c38106 > div.title_c38106::before,
+html:only-child > head + body div.bar_c38106 > div.title_c38106::after,
+/* logo SVG de 400px quase invisivel (opacity 0.3) no rodape da tela de configuracoes */
+html:only-child > head + body div.app_a3002d > div.app__160d8 > div.layers__960e4.layers__160d8 > div.layer__960e4.baseLayer__960e4 + div.layer__960e4 > div.standardSidebarView__23e6b::after,
+/* texto "BasicBackground by DevilBro" na sidebar das configuracoes */
+html > body div > div > div > div > div > div.sidebar__409aa > div.navScroller__409aa.thin_d125d2.scrollerBase_d125d2.fade_d125d2 > nav.nav__409aa::before,
+html > body div > div > div > div > div > div.sidebar__409aa > div.navScroller__409aa.thin_d125d2.scrollerBase_d125d2.fade_d125d2 > nav.nav__409aa::after {
 	display: none !important;
+	content: none !important;
 }
 
-/* texto escondido "BasicBackground by DevilBro" no rodape das configuracoes */
+/* fallback com seletores simples (caso o Discord mude a estrutura mas mantenha as classes) */
+.bar_c38106 .title_c38106::before,
+.bar_c38106 .title_c38106::after,
+.standardSidebarView__23e6b::after,
 .sidebar__409aa .nav__409aa::before,
 .sidebar__409aa .nav__409aa::after {
 	display: none !important;
