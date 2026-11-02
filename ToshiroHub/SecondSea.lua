@@ -313,8 +313,9 @@ end;
 gay = (function()
     local I = game:GetService("Lighting");
     local e = I:FindFirstChild("LightingLayers");
-    local K = workspace._WorldOrigin["Foam;"];
-    if K and workspace._WorldOrigin["Foam;"] then
+    local origin = workspace:FindFirstChild("_WorldOrigin");
+    local K = origin and origin:FindFirstChild("Foam;");
+    if K then
         K:Destroy();
     end;
 end)();
@@ -522,7 +523,7 @@ gyro.Name = "BringGyro"
 gyro.Parent = root  
 gyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)  
 task.spawn(function()  
-while root and root.Parent and hum.Health > 0 and _B do  
+while root and root.Parent and hum.Health > 0 and _B and typeof(PosMon) == "Vector3" do  
 local dist = (root.Position - PosMon).Magnitude  
 if dist > 5 then  
 body.P = 2e9  
@@ -550,7 +551,7 @@ if gyro then gyro:Destroy() end
 end)  
 end  
 BringEnemy = function()  
-if not _B then return end  
+if not _B or typeof(PosMon) ~= "Vector3" then return end  
 for _, e in pairs(workspace.Enemies:GetChildren()) do  
 if e:FindFirstChild("Humanoid")  
 and e.Humanoid.Health > 0  
@@ -6508,7 +6509,7 @@ task.spawn(function()
         end
     end
 end)
-_ENV.rz_FastAttack = FastAttack
+getgenv().rz_FastAttack = FastAttack
 FastAttackModule.FastAttack = FastAttack
 local FastAttackModule = {}
 local Players = game:GetService("Players")
@@ -6603,5 +6604,5 @@ task.spawn(function()
         end
     end
 end)
-_ENV.rz_FastAttack = FastAttack
+getgenv().rz_FastAttack = FastAttack
 FastAttackModule.FastAttack = FastAttack
