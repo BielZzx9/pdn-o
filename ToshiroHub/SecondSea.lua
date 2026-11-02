@@ -5638,7 +5638,7 @@ Player:AddButton({
 Player:AddDropdown({
     Title = "Aimbot Target Mode",
     Description = "",
-    Options = {"Closest Player", "Selected Player"},
+    Options = {"Closest Player", "Selected Player", "Closest NPC"},
     Default = "Closest Player",
     Callback = function(I)
         _G.TargetMode = I
@@ -5657,6 +5657,26 @@ function getClosestPlayer(lpHRP)
                     closest = plr
                 end
             end
+        end
+    end
+    return closest
+end
+local function getAimbotCharacter(target)
+    if not target then return nil end
+    if target:IsA("Player") then return target.Character end
+    return target
+end
+local function getAimbotTarget(root)
+    if _G.TargetMode ~= "Closest NPC" then return getClosestPlayer(root) end
+    local enemies = workspace:FindFirstChild("Enemies")
+    if not enemies then return nil end
+    local closest, distance = nil, maxRange
+    for _, npc in ipairs(enemies:GetChildren()) do
+        local hum = npc:FindFirstChildOfClass("Humanoid")
+        local hrp = npc:FindFirstChild("HumanoidRootPart")
+        if hum and hum.Health > 0 and hrp and hrp:IsA("BasePart") then
+            local d = (hrp.Position - root.Position).Magnitude
+            if d <= distance then closest, distance = npc, d end
         end
     end
     return closest
@@ -5698,11 +5718,13 @@ task.spawn(function()
                 else
                     local char = LocalPlayer.Character
                     if char and char:FindFirstChild("HumanoidRootPart") then
-                        targetPlr = getClosestPlayer(char.HumanoidRootPart)
+                        targetPlr = getAimbotTarget(char.HumanoidRootPart)
                     end
                 end
-                if targetPlr and targetPlr.Character and targetPlr.Character:FindFirstChild("HumanoidRootPart") then
-                    cam.CFrame = CFrame.new(cam.CFrame.Position, targetPlr.Character.HumanoidRootPart.Position)
+                local targetCharacter = getAimbotCharacter(targetPlr)
+                local targetRoot = targetCharacter and targetCharacter:FindFirstChild("HumanoidRootPart")
+                if targetRoot then
+                    cam.CFrame = CFrame.new(cam.CFrame.Position, targetRoot.Position)
                 end
             end)
         end
@@ -5749,10 +5771,11 @@ local function startRender()
         if _G.TargetMode == "Selected Player" then
             target = Players:FindFirstChild(_G.PlayersList)
         else
-            target = getClosestPlayer(hrp)
+            target = getAimbotTarget(hrp)
         end
-        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            local thrp = target.Character.HumanoidRootPart
+        local targetCharacter = getAimbotCharacter(target)
+        local thrp = targetCharacter and targetCharacter:FindFirstChild("HumanoidRootPart")
+        if thrp then
             PlayersPosition = getPredictedPosition(thrp)
             if currentTool and isSkillReadyForTool(currentTool.Name) then
                 local look = (Vector3.new(PlayersPosition.X, hrp.Position.Y, PlayersPosition.Z) - hrp.Position).Unit
