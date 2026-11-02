@@ -1,5 +1,5 @@
-return function(window)
-    local entries = {}
+return function(window, existingEntries)
+    local entries = existingEntries or {}
     local originalMakeTab = window.MakeTab
     function window:MakeTab(options)
         local tab = originalMakeTab(self, options)
@@ -56,7 +56,11 @@ return function(window)
         end
         local scale = math.max(top.AbsoluteSize.Y / 28, 0.01)
         scaleObject.Scale = scale
-        panel.Position = UDim2.fromOffset(top.AbsolutePosition.X / scale + 135, top.AbsolutePosition.Y / scale + 30)
+        local inset = root.IgnoreGuiInset and Vector2.zero or game:GetService("GuiService"):GetGuiInset()
+        local position = icon.AbsolutePosition + inset
+        local viewport = workspace.CurrentCamera.ViewportSize
+        local x = math.min(position.X + icon.AbsoluteSize.X + 12 * scale, viewport.X - 250 * scale - 8)
+        panel.Position = UDim2.fromOffset(math.max(8, x) / scale, (position.Y + icon.AbsoluteSize.Y + 8 * scale) / scale)
         local visible = root.Enabled
         local ancestor = top
         while ancestor and ancestor ~= root do
@@ -125,6 +129,23 @@ return function(window)
             make("TextLabel",results,{Text="Nenhuma funcao encontrada", Size=UDim2.new(1,0,0,28), BackgroundTransparency=1, TextColor3=Color3.fromRGB(180,180,185),TextSize=11,Font=Enum.Font.Gotham,ZIndex=42})
         end
     end
+    local outsideClick
+    local function inside(point, object, inset)
+        local p = object.AbsolutePosition + (inset or Vector2.zero)
+        local size = object.AbsoluteSize
+        return point.X >= p.X and point.X <= p.X + size.X and point.Y >= p.Y and point.Y <= p.Y + size.Y
+    end
+    outsideClick = game:GetService("UserInputService").InputBegan:Connect(function(event)
+        if not panel.Visible then return end
+        if event.UserInputType ~= Enum.UserInputType.MouseButton1 and event.UserInputType ~= Enum.UserInputType.Touch then return end
+        local point = Vector2.new(event.Position.X, event.Position.Y)
+        local inset = root.IgnoreGuiInset and Vector2.zero or game:GetService("GuiService"):GetGuiInset()
+        if not inside(point, panel) and not inside(point, icon, inset) then
+            panel.Visible = false
+            input:ReleaseFocus()
+        end
+    end)
+    overlay.Destroying:Connect(function() outsideClick:Disconnect() end)
     input:GetPropertyChangedSignal("Text"):Connect(refresh)
     icon.Activated:Connect(function()
         panel.Visible = not panel.Visible
