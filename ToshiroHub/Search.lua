@@ -36,6 +36,41 @@ return function(window)
         Size = UDim2.fromOffset(250,210), BackgroundColor3 = Color3.fromRGB(25,25,28),
         BorderSizePixel = 0, ZIndex = 40,
     })
+    local root = top:FindFirstAncestorWhichIsA("ScreenGui")
+    local overlay = Instance.new("ScreenGui")
+    overlay.Name = "ToshiroSearchOverlay"
+    overlay.IgnoreGuiInset = true
+    overlay.ResetOnSpawn = false
+    overlay.DisplayOrder = root.DisplayOrder + 100
+    overlay.ZIndexBehavior = Enum.ZIndexBehavior.Global
+    overlay.Parent = root.Parent
+    local scaleObject = Instance.new("UIScale")
+    scaleObject.Parent = overlay
+    panel.Parent = overlay
+    local follow
+    local function sync()
+        if not top.Parent then
+            if follow then follow:Disconnect() end
+            overlay:Destroy()
+            return
+        end
+        local scale = math.max(top.AbsoluteSize.Y / 28, 0.01)
+        scaleObject.Scale = scale
+        panel.Position = UDim2.fromOffset(top.AbsolutePosition.X / scale + 135, top.AbsolutePosition.Y / scale + 30)
+        local visible = root.Enabled
+        local ancestor = top
+        while ancestor and ancestor ~= root do
+            if ancestor:IsA("GuiObject") and not ancestor.Visible then visible = false end
+            ancestor = ancestor.Parent
+        end
+        overlay.Enabled = visible
+    end
+    sync()
+    follow = game:GetService("RunService").RenderStepped:Connect(sync)
+    root.Destroying:Connect(function()
+        follow:Disconnect()
+        overlay:Destroy()
+    end)
     make("UICorner", panel, {CornerRadius = UDim.new(0,7)})
     local input = make("TextBox", panel, {
         Name = "Query", Text = "", PlaceholderText = "Pesquisar funcao...", ClearTextOnFocus = false,
