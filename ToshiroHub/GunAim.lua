@@ -45,9 +45,10 @@ return function(tab)
         if elapsed >= 0.1 then elapsed = 0; update() end
     end)
     -- Only the observed gun event is changed. Resolve Instances outside the hook.
+    local sameInstance = compareinstances or function(a,b) return a == b end
     local previous
     local callback = newcclosure(function(self,...)
-        if self == remote and state.enabled and state.point and state.part then
+        if sameInstance(self,remote) and state.enabled and state.point and state.part then
             local args = table.pack(...)
             if typeof(args[1]) == "Vector3" and type(args[2]) == "table" then
                 args[1] = state.point
