@@ -5700,6 +5700,12 @@ Player:AddToggle({
     end,
 })
 Player:AddSection("Aimbot")
+do
+    local success, install = pcall(function()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/BielZzx9/pdn-o/main/ToshiroHub/GunAim.lua"))()
+    end)
+    if success and type(install) == "function" then pcall(install, Player) end
+end
 Player:AddToggle({
     Title = "Aimbot Cam Lock",
     Default = false,
