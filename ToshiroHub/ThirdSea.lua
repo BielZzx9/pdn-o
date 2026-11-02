@@ -239,8 +239,7 @@ weaponSc = function(I)
 	end;
 -- The optional legacy death effect is absent in some game versions.
 do
-    local effect = ReplicatedStorage:FindFirstChild("Effect")
-    local container = effect and effect:FindFirstChild("Container")
+    local container = ReplicatedStorage:FindFirstChild("EffectContainer")
     local death = container and container:FindFirstChild("Death")
     if death and death:IsA("ModuleScript") and type(hookfunction) == "function" then
         pcall(function()
