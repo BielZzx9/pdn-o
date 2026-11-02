@@ -2227,6 +2227,14 @@ QuestNeta = function()
     SubTitle = "By Star And Up",
     SaveFolder = "ToShiro.json"
 })
+do
+    local ok, install = pcall(function()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/BielZzx9/pdn-o/main/ToshiroHub/Search.lua"))()
+    end)
+    if ok and type(install) == "function" then
+        pcall(install, Library)
+    end
+end
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "ControlGUI"
 screenGui.Parent = game.CoreGui
