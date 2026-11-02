@@ -237,8 +237,20 @@ weaponSc = function(I)
 			end;
 		end;
 	end;
-hookfunction(require((game:GetService("ReplicatedStorage")).Effect.Container.Death), function()
-end);
+-- The optional legacy death effect is absent in some game versions.
+do
+    local effect = ReplicatedStorage:FindFirstChild("Effect")
+    local container = effect and effect:FindFirstChild("Container")
+    local death = container and container:FindFirstChild("Death")
+    if death and death:IsA("ModuleScript") and type(hookfunction) == "function" then
+        pcall(function()
+            local handler = require(death)
+            if type(handler) == "function" then
+                hookfunction(handler, function() end)
+            end
+        end)
+    end
+end
 hookfunction((require((game:GetService("ReplicatedStorage")):WaitForChild("GuideModule"))).ChangeDisplayedNPC, function()
 end);
 hookfunction(error, function()
