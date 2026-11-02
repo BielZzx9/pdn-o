@@ -1,9 +1,11 @@
 return function(tab)
  local env=getgenv()
  local retired=env.__ToshiroSilentGun
- if retired and retired.version=="screen" then return retired end
+ if retired and retired.version=="screen2" then return retired end
  if retired then
   retired.enabled=false
+  if retired.aim and retired.aim.getTargetInfo==retired.wrapper then retired.aim.getTargetInfo=retired.original end
+  if retired.gui then retired.gui:Destroy() end
   if retired.connection then retired.connection:Disconnect() end
   local previous=retired.directPrevious or (retired.hookKind=="FireServer" and retired.previous)
   if previous and retired.remote then hookfunction(retired.remote.FireServer,previous) end
@@ -14,7 +16,7 @@ return function(tab)
  local aim=require(game:GetService("ReplicatedStorage").Controllers.CombatController.AimAssist)
  local original=aim.getTargetInfo
  local info=debug.info
- local state={version="screen",enabled=false,mode="Near Mouse",radius=160,redirected=0,calls=0}
+ local state={version="screen2",enabled=false,mode="Near Mouse",radius=160,redirected=0,calls=0}
  local gui=Instance.new("ScreenGui")
  gui.Name="ToshiroGunRadius"
  gui.IgnoreGuiInset=true
@@ -41,7 +43,7 @@ return function(tab)
   local tool=char and char:FindFirstChildOfClass("Tool")
   if not state.enabled or not cam or not root or not tool or tool.ToolTip~="Gun" then return end
   local mouse=input:GetMouseLocation()-insetService:GetGuiInset()
-  local origin=state.mode=="Full Screen" and cam.ViewportSize/2 or mouse
+  local origin=state.mode=="Full Screen" and (cam.ViewportSize/2-insetService:GetGuiInset()) or mouse
   local limit=state.mode=="Full Screen" and math.huge or state.radius
   local enemies=workspace:FindFirstChild("Enemies")
   if not enemies then return end
@@ -49,7 +51,7 @@ return function(tab)
    local hum=npc:FindFirstChildOfClass("Humanoid")
    local part=npc:FindFirstChild("Head") or npc:FindFirstChild("HumanoidRootPart")
    if hum and hum.Health>0 and part and part:IsA("BasePart") and (part.Position-root.Position).Magnitude<=1000 then
-    local point,onScreen=cam:WorldToViewportPoint(part.Position)
+    local point,onScreen=cam:WorldToScreenPoint(part.Position)
     if onScreen and point.Z>0 then
      local distance=(Vector2.new(point.X,point.Y)-origin).Magnitude
      if distance<=limit then limit=distance; state.part=part; state.point=part.Position end
@@ -79,6 +81,7 @@ return function(tab)
  end
  aim.getTargetInfo=wrapper
  state.aim,state.original,state.wrapper=aim,original,wrapper
+ state.gui=gui
  env.__ToshiroSilentGun=state
  tab:AddDropdown({Title="Gun NPC Search",Options={"Near Mouse","Full Screen"},Default="Near Mouse",Callback=function(v) state.mode=v end})
  tab:AddSlider({Title="Gun Mouse Radius (px)",Min=25,Max=400,Default=160,Increment=5,Callback=function(v) state.radius=v end})
