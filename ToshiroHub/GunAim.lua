@@ -1,77 +1,87 @@
 return function(tab)
-    local env = getgenv()
-    if env.__ToshiroSilentGun then return env.__ToshiroSilentGun end
-    local players = game:GetService("Players")
-    local player = players.LocalPlayer
-    local net = game:GetService("ReplicatedStorage"):FindFirstChild("Modules")
-    net = net and net:FindFirstChild("Net")
-    local remote = net and net:FindFirstChild("RE/ShootGunEvent")
-    if not remote then return nil end
-    local state = {enabled=false, point=nil, part=nil, redirected=0}
-    local elapsed = 0
-    local function update()
-        state.point, state.part = nil, nil
-        if not state.enabled then return end
-        local character = player.Character
-        local root = character and character:FindFirstChild("HumanoidRootPart")
-        local tool = character and character:FindFirstChildOfClass("Tool")
-        if not root or not tool or (tool.ToolTip ~= "Gun" and tool:GetAttribute("WeaponType") ~= "Gun") then return end
-        local closest, distance = nil, 1000
-        local function consider(model)
-            if not model or model == character then return end
-            local hum = model:FindFirstChildOfClass("Humanoid")
-            local hrp = model:FindFirstChild("HumanoidRootPart")
-            if not hum or hum.Health <= 0 or not hrp or not hrp:IsA("BasePart") then return end
-            local d = (hrp.Position-root.Position).Magnitude
-            if d <= distance then closest, distance = model, d end
-        end
-        if _G.TargetMode == "Closest NPC" then
-            local enemies = workspace:FindFirstChild("Enemies")
-            if enemies then for _,npc in ipairs(enemies:GetChildren()) do consider(npc) end end
-        elseif _G.TargetMode == "Selected Player" then
-            local target = players:FindFirstChild(_G.PlayersList or "")
-            if target then consider(target.Character) end
-        else
-            for _,target in ipairs(players:GetPlayers()) do if target ~= player then consider(target.Character) end end
-        end
-        if closest then
-            local head = closest:FindFirstChild("Head")
-            if not head or not head:IsA("BasePart") then head = closest:FindFirstChild("HumanoidRootPart") end
-            state.part, state.point = head, head.Position
-        end
+ local env=getgenv()
+ local retired=env.__ToshiroSilentGun
+ if retired and retired.version=="screen" then return retired end
+ if retired then
+  retired.enabled=false
+  if retired.connection then retired.connection:Disconnect() end
+  local previous=retired.directPrevious or (retired.hookKind=="FireServer" and retired.previous)
+  if previous and retired.remote then hookfunction(retired.remote.FireServer,previous) end
+ end
+ local player=game:GetService("Players").LocalPlayer
+ local input=game:GetService("UserInputService")
+ local insetService=game:GetService("GuiService")
+ local aim=require(game:GetService("ReplicatedStorage").Controllers.CombatController.AimAssist)
+ local original=aim.getTargetInfo
+ local info=debug.info
+ local state={version="screen",enabled=false,mode="Near Mouse",radius=160,redirected=0,calls=0}
+ local gui=Instance.new("ScreenGui")
+ gui.Name="ToshiroGunRadius"
+ gui.IgnoreGuiInset=true
+ gui.ResetOnSpawn=false
+ gui.DisplayOrder=20
+ gui.Parent=gethui and gethui() or game:GetService("CoreGui")
+ local circle=Instance.new("Frame")
+ circle.AnchorPoint=Vector2.new(0.5,0.5)
+ circle.BackgroundTransparency=1
+ circle.Visible=false
+ circle.Parent=gui
+ local corner=Instance.new("UICorner")
+ corner.CornerRadius=UDim.new(0.5,0)
+ corner.Parent=circle
+ local stroke=Instance.new("UIStroke")
+ stroke.Color=Color3.fromRGB(145,135,255)
+ stroke.Thickness=1
+ stroke.Parent=circle
+ local function choose()
+  state.part,state.point=nil,nil
+  local cam=workspace.CurrentCamera
+  local char=player.Character
+  local root=char and char:FindFirstChild("HumanoidRootPart")
+  local tool=char and char:FindFirstChildOfClass("Tool")
+  if not state.enabled or not cam or not root or not tool or tool.ToolTip~="Gun" then return end
+  local mouse=input:GetMouseLocation()-insetService:GetGuiInset()
+  local origin=state.mode=="Full Screen" and cam.ViewportSize/2 or mouse
+  local limit=state.mode=="Full Screen" and math.huge or state.radius
+  local enemies=workspace:FindFirstChild("Enemies")
+  if not enemies then return end
+  for _,npc in ipairs(enemies:GetChildren()) do
+   local hum=npc:FindFirstChildOfClass("Humanoid")
+   local part=npc:FindFirstChild("Head") or npc:FindFirstChild("HumanoidRootPart")
+   if hum and hum.Health>0 and part and part:IsA("BasePart") and (part.Position-root.Position).Magnitude<=1000 then
+    local point,onScreen=cam:WorldToViewportPoint(part.Position)
+    if onScreen and point.Z>0 then
+     local distance=(Vector2.new(point.X,point.Y)-origin).Magnitude
+     if distance<=limit then limit=distance; state.part=part; state.point=part.Position end
     end
-    state.connection = game:GetService("RunService").Heartbeat:Connect(function(dt)
-        elapsed += dt
-        if elapsed >= 0.1 then elapsed = 0; update() end
-    end)
-    -- Only the observed gun event is changed. Resolve Instances outside the hook.
-    local sameInstance = compareinstances or function(a,b) return a == b end
-    local previous
-    local callback = newcclosure(function(self,...)
-        if sameInstance(self,remote) and state.enabled and state.point and state.part then
-            local args = table.pack(...)
-            if typeof(args[1]) == "Vector3" and type(args[2]) == "table" then
-                args[1] = state.point
-                args[2] = {state.part}
-                state.redirected += 1
-                return previous(self,table.unpack(args,1,args.n))
-            end
-        end
-        return previous(self,...)
-    end)
-    previous = hookfunction(remote.FireServer,callback)
-    state.previous, state.callback = previous, callback
-    state.hookKind = "FireServer"
-    state.remote = remote
-    env.__ToshiroSilentGun = state
-    tab:AddToggle({
-        Title = "Aimbot Gun (Silent)",
-        Description = "Redireciona o clique. Use com Cam Lock e Aimbot Skills desligados.",
-        Default = false,
-        Callback = function(enabled)
-            state.enabled = enabled
-            update()
-        end,
-    })
-    return state
+   end
+  end
+ end
+ state.connection=game:GetService("RunService").RenderStepped:Connect(function()
+  local mouse=input:GetMouseLocation()
+  circle.Position=UDim2.fromOffset(mouse.X,mouse.Y)
+  circle.Size=UDim2.fromOffset(state.radius*2,state.radius*2)
+  circle.Visible=state.enabled and state.mode=="Near Mouse"
+  choose()
+ end)
+ local wrapper=function(delta,...)
+  local caller=info(2,"n")
+  state.calls+=1
+  state.lastCaller=caller
+  if state.enabled and delta==0 and caller=="shootGun" then
+   choose()
+   if state.part then
+    state.redirected+=1
+    return {Part=state.part,Position=state.point,Strength=1,Score=0,ScreenDistance=0,WorldDistance=0}
+   end
+  end
+  return original(delta,...)
+ end
+ aim.getTargetInfo=wrapper
+ state.aim,state.original,state.wrapper=aim,original,wrapper
+ env.__ToshiroSilentGun=state
+ tab:AddDropdown({Title="Gun NPC Search",Options={"Near Mouse","Full Screen"},Default="Near Mouse",Callback=function(v) state.mode=v end})
+ tab:AddSlider({Title="Gun Mouse Radius (px)",Min=25,Max=400,Default=160,Increment=5,Callback=function(v) state.radius=v end})
+ tab:AddToggle({Title="Aimbot Gun (Silent)",Description="NPCs na tela. Desligue Cam Lock e Aimbot Skills.",Default=false,Callback=function(v) state.enabled=v; choose() end})
+ return state
 end
