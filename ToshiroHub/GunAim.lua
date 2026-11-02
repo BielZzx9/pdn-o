@@ -47,8 +47,7 @@ return function(tab)
     -- Only the observed gun event is changed. Resolve Instances outside the hook.
     local previous
     local callback = newcclosure(function(self,...)
-        local method = getnamecallmethod()
-        if self == remote and method == "FireServer" and state.enabled and state.point and state.part then
+        if self == remote and state.enabled and state.point and state.part then
             local args = table.pack(...)
             if typeof(args[1]) == "Vector3" and type(args[2]) == "table" then
                 args[1] = state.point
@@ -59,8 +58,10 @@ return function(tab)
         end
         return previous(self,...)
     end)
-    previous = hookmetamethod(game,"__namecall",callback)
+    previous = hookfunction(remote.FireServer,callback)
     state.previous, state.callback = previous, callback
+    state.hookKind = "FireServer"
+    state.remote = remote
     env.__ToshiroSilentGun = state
     tab:AddToggle({
         Title = "Aimbot Gun (Silent)",
