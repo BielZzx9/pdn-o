@@ -1,4 +1,4 @@
--- Silent Aim by BielZzk | NPC + Players | AimAssist
+-- Silent Aim by BielZzk | NPC + Players | AimAssist + Save Config
 if not game:IsLoaded() then game.Loaded:Wait() end
 
 local env = getgenv()
@@ -11,7 +11,46 @@ local input = game:GetService("UserInputService")
 local run = game:GetService("RunService")
 local insetService = game:GetService("GuiService")
 local virtualInput = game:GetService("VirtualInputManager")
+local HttpService = game:GetService("HttpService")
 local player = players.LocalPlayer
+
+local CONFIG_FOLDER = "SilentAimBielZzk"
+local CONFIG_FILE = CONFIG_FOLDER .. "/config.json"
+
+local function ensureFolder()
+    if makefolder and not isfolder(CONFIG_FOLDER) then
+        pcall(makefolder, CONFIG_FOLDER)
+    end
+end
+
+local function loadConfig()
+    ensureFolder()
+    if not (isfile and isfile(CONFIG_FILE)) then return nil end
+    local ok, data = pcall(function()
+        return HttpService:JSONDecode(readfile(CONFIG_FILE))
+    end)
+    if ok and type(data) == "table" then return data end
+    return nil
+end
+
+local function saveConfig(state)
+    ensureFolder()
+    if not writefile then return end
+    local data = {
+        silent = state.silent,
+        auto = state.auto,
+        full = state.full,
+        targetPlayers = state.targetPlayers,
+        targetNpcs = state.targetNpcs,
+        radius = state.radius,
+        distance = state.distance,
+    }
+    pcall(function()
+        writefile(CONFIG_FILE, HttpService:JSONEncode(data))
+    end)
+end
+
+local saved = loadConfig() or {}
 
 local controller = game:GetService("ReplicatedStorage")
     :WaitForChild("Controllers")
@@ -21,17 +60,21 @@ local original = aim.getTargetInfo
 local debugInfo = debug.info
 
 local state = {
-    silent = false,
-    auto = false,
-    full = false,
-    targetPlayers = true,
-    targetNpcs = true,
-    radius = 160,
-    distance = 1000,
+    silent = saved.silent == true,
+    auto = saved.auto == true,
+    full = saved.full == true,
+    targetPlayers = saved.targetPlayers ~= false, -- default true
+    targetNpcs = saved.targetNpcs ~= false,       -- default true
+    radius = math.clamp(tonumber(saved.radius) or 160, 25, 2000),
+    distance = math.clamp(tonumber(saved.distance) or 1000, 50, 20000),
     alive = true,
     redirected = 0,
     connections = {},
 }
+
+local function persist()
+    saveConfig(state)
+end
 
 local function connect(signal, callback)
     local c = signal:Connect(callback)
@@ -124,7 +167,7 @@ local radiusLabel = make("TextLabel", panel, {
 local minus = button("-", 10, 217, 28, 30)
 local plus = button("+", 248, 217, 28, 30)
 local radiusBox = make("TextBox", panel, {
-    Text = "160",
+    Text = tostring(state.radius),
     PlaceholderText = "25 a 2000 px",
     ClearTextOnFocus = false,
     Font = Enum.Font.Gotham,
@@ -151,7 +194,7 @@ local distanceLabel = make("TextLabel", panel, {
 local distanceMinus = button("-", 10, 273, 28, 30)
 local distancePlus = button("+", 248, 273, 28, 30)
 local distanceBox = make("TextBox", panel, {
-    Text = "1000",
+    Text = tostring(state.distance),
     PlaceholderText = "50 a 20000 studs",
     ClearTextOnFocus = false,
     Font = Enum.Font.Gotham,
@@ -196,11 +239,13 @@ end
 local function setDistance(value)
     state.distance = math.clamp(math.floor(tonumber(value) or state.distance), 50, 20000)
     refresh()
+    persist()
 end
 
 local function setRadius(value)
     state.radius = math.clamp(math.floor(tonumber(value) or state.radius), 25, 2000)
     refresh()
+    persist()
 end
 
 local function equippedGun()
@@ -210,16 +255,10 @@ local function equippedGun()
 end
 
 local function considerTarget(part, root, camera, origin, bestDist)
-    if not part or not part:IsA("BasePart") then
-        return bestDist
-    end
-    if (part.Position - root.Position).Magnitude > state.distance then
-        return bestDist
-    end
+    if not part or not part:IsA("BasePart") then return bestDist end
+    if (part.Position - root.Position).Magnitude > state.distance then return bestDist end
     local point, onScreen = camera:WorldToScreenPoint(part.Position)
-    if not onScreen or point.Z <= 0 then
-        return bestDist
-    end
+    if not onScreen or point.Z <= 0 then return bestDist end
     local d = (Vector2.new(point.X, point.Y) - origin).Magnitude
     if d <= bestDist then
         state.part = part
@@ -234,15 +273,12 @@ local function choose()
     local camera = workspace.CurrentCamera
     local char = player.Character
     local root = char and char:FindFirstChild("HumanoidRootPart")
-    if not state.alive or not state.silent or not camera or not root or not equippedGun() then
-        return
-    end
+    if not state.alive or not state.silent or not camera or not root or not equippedGun() then return end
 
     local inset = insetService:GetGuiInset()
     local origin = state.full and (camera.ViewportSize / 2 - inset) or (input:GetMouseLocation() - inset)
     local best = state.full and math.huge or state.radius
 
-    -- NPCs
     if state.targetNpcs then
         local enemies = workspace:FindFirstChild("Enemies")
         if enemies then
@@ -256,7 +292,6 @@ local function choose()
         end
     end
 
-    -- Players
     if state.targetPlayers then
         local chars = workspace:FindFirstChild("Characters")
         if chars then
@@ -317,44 +352,50 @@ function state.Destroy()
     state.alive = false
     state.auto = false
     release()
+    persist()
     for _, connection in ipairs(state.connections) do
         connection:Disconnect()
     end
-    if state.autoTask then
-        pcall(task.cancel, state.autoTask)
-    end
-    if aim.getTargetInfo == wrapper then
-        aim.getTargetInfo = original
-    end
+    if state.autoTask then pcall(task.cancel, state.autoTask) end
+    if aim.getTargetInfo == wrapper then aim.getTargetInfo = original end
     gui:Destroy()
-    if env.__SilentAimBielZzk == state then
-        env.__SilentAimBielZzk = nil
-    end
+    if env.__SilentAimBielZzk == state then env.__SilentAimBielZzk = nil end
 end
 
 connect(close.Activated, state.Destroy)
+
 connect(silentButton.Activated, function()
     state.silent = not state.silent
     if not state.silent then release() end
     refresh()
+    persist()
 end)
+
 connect(autoButton.Activated, function()
     state.auto = not state.auto
     if not state.auto then release() end
     refresh()
+    persist()
 end)
+
 connect(modeButton.Activated, function()
     state.full = not state.full
     refresh()
+    persist()
 end)
+
 connect(playersButton.Activated, function()
     state.targetPlayers = not state.targetPlayers
     refresh()
+    persist()
 end)
+
 connect(npcsButton.Activated, function()
     state.targetNpcs = not state.targetNpcs
     refresh()
+    persist()
 end)
+
 connect(minus.Activated, function() setRadius(state.radius - 50) end)
 connect(plus.Activated, function() setRadius(state.radius + 50) end)
 connect(radiusBox.FocusLost, function() setRadius(radiusBox.Text) end)
@@ -438,8 +479,8 @@ state.autoTask = task.spawn(function()
             if not ok then
                 release()
                 state.auto = false
-                state.lastError = tostring(err)
                 refresh()
+                persist()
             end
         end
     end
@@ -447,4 +488,5 @@ end)
 
 env.__SilentAimBielZzk = state
 refresh()
+persist() -- grava estado inicial carregado / defaults
 return state
