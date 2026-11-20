@@ -525,7 +525,6 @@ Localization.RefreshLibrary()
 
 local Window = WindUI:CreateWindow({
     Title = T("自动赏金"),
-    Author = T(".gg/rjrhub"),
     Folder = "AutoBountyMain",
     Size = UDim2.fromOffset(640, 520),
     Theme = "Dark",
