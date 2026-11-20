@@ -555,7 +555,6 @@ Localization.Track(Window.ScreenGui)
 local UI = {}
 
 local Tabs = {
-    Discord = Window:Tab({ Title = "Discord" }),
     Bounty = Window:Tab({ Title = T("自动赏金") }),
     Skills = Window:Tab({ Title = T("技能配置") }),
     Attacks = Window:Tab({ Title = T("战斗设置") }),
@@ -4268,48 +4267,6 @@ local function CopyToClipboard(text)
         end
     end
     return false
-end
-
--- ═══════════════════════════════════════════════════════════════
--- Discord 标签页（排在标签栏最上方）
--- ═══════════════════════════════════════════════════════════════
-local DISCORD_INVITE_URL = "https://discord.gg/rjrhub"
-local DiscordCard = Tabs.Discord:Paragraph({
-    Title = "RJR Hub",
-    Desc = T("请加入我们的服务器") .. "\n" .. DISCORD_INVITE_URL,
-    Thumbnail = "",
-    ThumbnailSize = 120,
-    Buttons = {{
-        Title = T("复制 Discord 邀请链接"),
-        Callback = function()
-            CopyToClipboard(DISCORD_INVITE_URL)
-            WindUI:Notify({ Type = "Success", Title = "RJR Hub", Content = T("已复制 Discord 链接"), Duration = 3 })
-        end
-    }}
-})
--- 横幅动画: 深色流体 + RJR 字样, 与 main.lua 共用 RJRBanner (只下载一次)
-do
-    local thumb = DiscordCard and DiscordCard.UIElements.Thumbnail
-    if thumb then
-        thumb.BackgroundColor3 = Color3.fromRGB(8, 9, 12)
-        thumb.BackgroundTransparency = 0
-    end
-    local function MountBanner()
-        if thumb and thumb.Parent and RJRBanner then pcall(RJRBanner.Mount, thumb) end
-    end
-    if RJRBanner then
-        MountBanner()
-    else
-        task.spawn(function()
-            local ok, mod = pcall(function()
-                return loadstring(game:HttpGet("https://rjr-loader.top/script/icon"))()
-            end)
-            if ok and type(mod) == "table" and type(mod.Mount) == "function" then
-                RJRBanner = mod
-                MountBanner()
-            end
-        end)
-    end
 end
 
 Tabs.Settings:Button({
