@@ -532,7 +532,7 @@ local Window = WindUI:CreateWindow({
     Font = "ComicNeueAngular",
     HideSearchBar = true,
     OpenButton = {
-        Title = "RJR Hub",
+        Title = "Zzk hub",
         CornerRadius = UDim.new(1, 0),
         StrokeThickness = 3,
         Enabled = true,
@@ -546,7 +546,7 @@ local Window = WindUI:CreateWindow({
     }
 })
 
--- Always start minimized; the RJR Hub button reopens the window.
+-- Always start minimized; the Zzk hub button reopens the window.
 Window:Minimize()
 
 -- Includes the library's close dialog and labels created by dropdown menus.
