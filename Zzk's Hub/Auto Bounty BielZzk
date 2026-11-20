@@ -546,7 +546,8 @@ local Window = WindUI:CreateWindow({
     }
 })
 
--- Always start minimized; the Zzk hub button reopens the window.
+-- Apply the reopen button title to the live UI before minimizing.
+Window:EditOpenButton({ Title = "Zzk hub" })
 Window:Minimize()
 
 -- Includes the library's close dialog and labels created by dropdown menus.
