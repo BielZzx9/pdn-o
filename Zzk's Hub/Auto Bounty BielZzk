@@ -17,15 +17,38 @@ local CommE = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("CommE")
 local LocalPlayer = Players.LocalPlayer
 local Net = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net")
 
-local LangEnglish = (function()
+-- Language preferences are independent of combat/configuration values.
+local Localization = {
+    Language = "zh",
+    PreferenceFile = "AutoBountyMain_language_" .. tostring(LocalPlayer.UserId) .. ".txt",
+    Aliases = {
+        chinese = "zh", zh = "zh", ["zh-cn"] = "zh", cn = "zh", ["简体中文"] = "zh",
+        english = "en", en = "en", eng = "en",
+        portuguese = "pt", portugues = "pt", ["português"] = "pt",
+        pt = "pt", ["pt-br"] = "pt", pt_br = "pt", ["pt-pt"] = "pt",
+        ["Português (Brasil)"] = "pt", ["português (brasil)"] = "pt",
+    },
+    Names = { zh = "简体中文", en = "English", pt = "Português (Brasil)" },
+    Tracked = setmetatable({}, { __mode = "k" }),
+    Roots = setmetatable({}, { __mode = "k" }),
+    Reverse = {},
+}
+
+function Localization.Normalize(value)
+    if type(value) ~= "string" then return nil end
+    return Localization.Aliases[value] or Localization.Aliases[string.lower(value:match("^%s*(.-)%s*$"))]
+end
+
+do
     local env = getgenv and getgenv()
-    if type(env) ~= "table" then return false end
-    local lang = env.Language
-    if type(lang) ~= "string" then lang = env.language end
-    if type(lang) ~= "string" then return false end
-    lang = string.lower(lang)
-    return lang == "english" or lang == "en" or lang == "eng"
-end)()
+    local language = type(env) == "table" and (env.Language or env.language) or nil
+    language = Localization.Normalize(language)
+    if not language and type(readfile) == "function" then
+        local ok, saved = pcall(readfile, Localization.PreferenceFile)
+        if ok then language = Localization.Normalize(saved) end
+    end
+    Localization.Language = language or "zh"
+end
 
 local LangMap = {
     ["水上行走 / 防落水"] = "Water Walk / Water Protection",
@@ -161,9 +184,294 @@ local LangMap = {
     ["已复制 DC 链接"] = "DC link copied",
 }
 
+Localization.Portuguese = {
+    ["水上行走 / 防落水"] = "Andar sobre a água / Proteção contra quedas",
+    ["加厚水面，并保护追人及瞬步落点"] = "Aumenta a espessura da superfície da água e protege os pontos de chegada durante perseguições e o Soru.",
+    ["V4 后释放"] = "Somente na transformação V4",
+    ["开启后，本栏所选技能仅在 V4 变身期间释放"] = "Usa as habilidades selecionadas desta categoria somente durante a transformação V4.",
+    ["性能优化"] = "Otimização de desempenho",
+    ["简化地图与特效，分帧处理"] = "Simplifica o mapa e os efeitos, distribuindo o processamento entre os quadros.",
+    ["画质正在恢复；flag 原值无法读取，需重进游戏恢复"] = "Restaurando os gráficos. Como o valor original da opção interna não está disponível, entre novamente no jogo para restaurá-lo.",
+    ["脚本已在运行中，请勿重复执行！"] = "O script já está em execução. Não o execute novamente!",
+    ["基础版"] = "Básico",
+    ["自动赏金"] = "Caça automática de recompensas",
+    ["技能配置"] = "Configuração de habilidades",
+    ["战斗设置"] = "Configurações de combate",
+    ["服务器"] = "Servidor",
+    ["设置"] = "Configurações",
+    ["自己"] = "Você",
+    ["已离开服务器"] = "Saiu do servidor",
+    ["未加载角色"] = "Personagem não carregado",
+    ["缺少 Humanoid/HRP"] = "Humanoid ou HumanoidRootPart ausente",
+    ["已死亡"] = "Morto",
+    ["安全区且未战斗"] = "Em uma zona segura, fora de combate",
+    ["PVP 已关闭"] = "PvP desativado",
+    ["单人竞技场"] = "Arena de duelos",
+    ["同队海军"] = "Na mesma equipe (Marinha)",
+    ["读不到等级"] = "Não foi possível obter o nível",
+    ["等级差 > 700"] = "Diferença de nível superior a 700",
+    ["本地角色未就绪"] = "Seu personagem ainda não está pronto",
+    ["距离 > 30000"] = "Distância superior a 30.000",
+    ["锁定时间到"] = "Tempo de foco no alvo esgotado",
+    ["信息面板更新异常"] = "Erro ao atualizar o painel de informações",
+    ["未知"] = "Desconhecido",
+    ["当前赏金"] = "Recompensa atual",
+    ["运行时间"] = "Tempo de execução",
+    ["随机"] = "Aleatória",
+    ["自动跳服"] = "Troca automática de servidor",
+    ["没有找到符合区域条件的服务器，稍后重试"] = "Nenhum servidor corresponde à região selecionada. Uma nova tentativa será feita em breve.",
+    ["传送前检测到赏金危险状态，已中止传送：继续上升等待"] = "Sua recompensa está em risco. O teletransporte foi cancelado; continuando a subir e aguardando.",
+    ["没有完全符合人数/赏金条件的服务器，已放宽筛选\\n跳到：%s | %d人 | 赏金 %s"] = "Nenhum servidor atende aos filtros de jogadores e recompensa. Os filtros foram flexibilizados.\\nDestino: %s | %d jogadores | Recompensa: %s",
+    ["已匹配服务器\\n区域：%s | 人数：%d | 赏金：%s"] = "Servidor encontrado.\\nRegião: %s | Jogadores: %d | Recompensa: %s",
+    ["传送前出现目标，已取消传送"] = "Um alvo apareceu antes do teletransporte. O teletransporte foi cancelado.",
+    ["赏金危险状态：禁止跳服，正在上升等待危险解除"] = "Sua recompensa está em risco. A troca de servidor foi bloqueada; subindo até o risco passar.",
+    ["当前服务器无目标，正在跳服..."] = "Nenhum alvo neste servidor. Trocando de servidor...",
+    ["跳服途中进入赏金危险状态，已中止传送：继续上升等待"] = "Sua recompensa entrou em risco durante a troca de servidor. A troca foi cancelada; continuando a subir e aguardando.",
+    ["危险已解除，继续跳服"] = "O risco passou. Retomando a troca de servidor.",
+    ["目标 %s 不符合条件（%s），立刻换人"] = "O alvo %s não atende mais aos critérios (%s). Selecionando outro alvo.",
+    ["锁定 %s 已达 %.0f 秒（上限 %d 秒），换人锁定（该玩家 %d 秒内不再选）"] = "O alvo %s foi mantido por %.0f s (limite: %d s). Selecionando outro alvo; esse jogador será ignorado por %d s.",
+    ["跳服途中出现目标，已立刻中止跳服并前去攻击"] = "Um alvo apareceu durante a troca de servidor. A troca foi cancelada; iniciando o combate.",
+    ["主循环异常（已自动恢复）"] = "Erro no ciclo principal (recuperado automaticamente)",
+    ["已进入新服务器，重新寻找目标"] = "Você entrou em um novo servidor. Procurando um alvo.",
+    ["技能"] = "Habilidades",
+    [" 蓄力"] = "Tempo de carga",
+    ["近战"] = "Corpo a corpo",
+    ["剑"] = "Espada",
+    ["果实"] = "Fruta",
+    ["枪械"] = "Arma de fogo",
+    ["快速攻击"] = "Ataque rápido",
+    ["果实m1攻击"] = "Ataque básico da fruta (M1)",
+    ["龙炮攻击"] = "Ataque com Dragonstorm",
+    ["虚空果实m1"] = "Ataque básico da fruta Void (M1)",
+    ["战斗辅助"] = "Assistência de combate",
+    ["自动开启 PVP"] = "Ativar PvP automaticamente",
+    ["自动武装色"] = "Ativar Haki do Armamento automaticamente",
+    ["自动见闻色"] = "Ativar Haki da Observação automaticamente",
+    ["自动 V3"] = "Usar V3 automaticamente",
+    ["自动使用种族 V3 技能"] = "Usa automaticamente a habilidade V3 da raça.",
+    ["单服最长停留(秒)"] = "Tempo máximo por servidor (s)",
+    ["本服停留已达 %d 分钟，赏金危险解除后立刻跳服"] = "O tempo neste servidor chegou a %d min. A troca será feita assim que sua recompensa estiver fora de risco.",
+    ["自动瞬步"] = "Usar Soru automaticamente",
+    ["自动逃跑"] = "Fugir automaticamente",
+    ["逃跑血量阈值(%)"] = "Limite de vida para fugir (%)",
+    ["手持武器类型"] = "Tipo de arma equipada",
+    ["选择阵营"] = "Selecionar equipe",
+    ["启用 ESP"] = "Ativar ESP",
+    ["显示名称"] = "Mostrar nome",
+    ["显示等级"] = "Mostrar nível",
+    ["显示血量"] = "Mostrar vida",
+    ["显示距离"] = "Mostrar distância",
+    ["显示 PVP 状态"] = "Mostrar estado do PvP",
+    ["字体大小"] = "Tamanho da fonte",
+    ["服务器区域"] = "Região do servidor",
+    ["跳服人数范围"] = "Faixa de jogadores para a troca",
+    ["只跳到该人数区间的服务器"] = "Troca apenas para servidores dentro desta faixa de jogadores.",
+    ["跳服赏金范围"] = "Recompensa mínima para a troca",
+    ["只跳到该赏金以上的服务器"] = "Troca apenas para servidores com recompensa acima do valor selecionado.",
+    ["大于3m"] = "Acima de 3M",
+    ["大于5m"] = "Acima de 5M",
+    ["大于10m"] = "Acima de 10M",
+    ["大于15m"] = "Acima de 15M",
+    ["大于25m"] = "Acima de 25M",
+    ["大于35m"] = "Acima de 35M",
+    ["大于50m"] = "Acima de 50M",
+    ["手动跳服"] = "Trocar de servidor agora",
+    ["当前服务器 ID"] = "ID do servidor atual",
+    ["锁定玩家时间"] = "Tempo de foco no jogador (s)",
+    ["执行器不支持 writefile"] = "O executor não oferece suporte a writefile",
+    ["当前执行器不支持 writefile"] = "Este executor não oferece suporte a writefile",
+    ["当前执行器不支持 readfile"] = "Este executor não oferece suporte a readfile",
+    ["保存配置"] = "Salvar configurações",
+    ["保存配置失败"] = "Falha ao salvar as configurações",
+    ["序列化失败："] = "Falha ao serializar: ",
+    [" / 回退也失败："] = " / a alternativa também falhou: ",
+    ["\n（设置不会被保存，请检查执行器权限）"] = "\n(As configurações não serão salvas. Verifique as permissões do executor.)",
+    ["有标签页挂载自动保存失败，这些页面的改动可能不会写盘：\\n"] = "Não foi possível ativar o salvamento automático em algumas abas. As alterações nessas abas podem não ser salvas:\\n",
+    ["[ PVP 开启 ]"] = "[ PvP ATIVADO ]",
+    ["；"] = "; ",
+    ["[ PVP 关闭 ]"] = "[ PvP DESATIVADO ]",
+    ["已保存到 "] = "Salvo em ",
+    ["保存失败："] = "Falha ao salvar: ",
+    ["加载配置"] = "Carregar configurações",
+    ["没有找到配置文件"] = "Arquivo de configurações não encontrado",
+    ["读取失败"] = "Falha na leitura",
+    ["配置格式错误"] = "Formato de configuração inválido",
+    ["检测到旧版配置，技能蓄力已统一迁移为 "] = "Foi detectada uma configuração antiga. O tempo de carga das habilidades foi padronizado para ",
+    [" 秒"] = " s",
+    ["配置已加载并应用"] = "Configurações carregadas e aplicadas",
+    ["配置保存"] = "Salvamento de configurações",
+    ["设置变更时自动保存"] = "Salvar automaticamente ao alterar configurações",
+    ["启动时自动加载配置"] = "Carregar configurações ao iniciar",
+    ["删除配置"] = "Excluir configurações",
+    ["导出配置到剪切板"] = "Copiar configurações para a área de transferência",
+    ["复制成 getgenv().Config = {...}，粘在加载脚本那行前面就能导入"] = "Copia o idioma e getgenv().Config = {...}. Para importar, cole o conteúdo antes da linha que carrega o script.",
+    ["配置文件已删除"] = "Arquivo de configurações excluído",
+    ["没有可删除的配置"] = "Não há configurações para excluir",
+    ["脚本已加载"] = "Script carregado",
+    ["WindUI 加载失败：把 windui.lua 放到执行器根目录，或检查网络"] = "Falha ao carregar o WindUI. Coloque windui.lua na pasta principal do executor ou verifique sua conexão.",
+    ["自动保存"] = "Salvamento automático",
+    ["界面控件缺失："] = "Controles da interface ausentes: ",
+    ["控件回调异常："] = "Erro na função de um controle: ",
+    ["DC 服务器"] = "Servidor do Discord",
+    ["点击复制 DC 链接"] = "Clique para copiar o link do Discord",
+    ["复制成功"] = "Copiado",
+    ["已复制 DC 链接"] = "Link do Discord copiado",
+}
+
+LangMap["请加入我们的服务器"] = "Join our Discord server"
+Localization.Portuguese["请加入我们的服务器"] = "Entre no nosso servidor do Discord"
+LangMap["复制 Discord 邀请链接"] = "Copy Discord invite link"
+Localization.Portuguese["复制 Discord 邀请链接"] = "Copiar convite do Discord"
+LangMap["已复制 Discord 链接"] = "Discord invite link copied"
+Localization.Portuguese["已复制 Discord 链接"] = "Convite do Discord copiado"
+LangMap["界面语言"] = "Interface language"
+Localization.Portuguese["界面语言"] = "Idioma da interface"
+LangMap["语言立即应用并自动保存"] = "Applies immediately and saves your language preference."
+Localization.Portuguese["语言立即应用并自动保存"] = "O idioma é aplicado imediatamente e salvo para as próximas execuções."
+LangMap["Blox Fruit"] = "Blox Fruit"
+Localization.Portuguese["Blox Fruit"] = "Fruta Blox"
+LangMap["Pirates"] = "Pirates"
+Localization.Portuguese["Pirates"] = "Piratas"
+LangMap["Marines"] = "Marines"
+Localization.Portuguese["Marines"] = "Marinha"
+LangMap["Oregon"] = "Oregon"
+Localization.Portuguese["Oregon"] = "Oregon"
+LangMap["Florida"] = "Florida"
+Localization.Portuguese["Florida"] = "Flórida"
+LangMap["Texas"] = "Texas"
+Localization.Portuguese["Texas"] = "Texas"
+LangMap["California"] = "California"
+Localization.Portuguese["California"] = "Califórnia"
+LangMap["Hong Kong"] = "Hong Kong"
+Localization.Portuguese["Hong Kong"] = "Hong Kong"
+LangMap["Germany"] = "Germany"
+Localization.Portuguese["Germany"] = "Alemanha"
+LangMap["Brazil"] = "Brazil"
+Localization.Portuguese["Brazil"] = "Brasil"
+LangMap["Singapore"] = "Singapore"
+Localization.Portuguese["Singapore"] = "Singapura"
+LangMap["Lv. "] = "Lv. "
+Localization.Portuguese["Lv. "] = "Nível: "
+LangMap["HP: "] = "HP: "
+Localization.Portuguese["HP: "] = "Vida: "
+LangMap["关闭窗口"] = "Close window"
+Localization.Portuguese["关闭窗口"] = "Fechar janela"
+LangMap["确定要关闭窗口吗? 关闭后需要重新执行脚本才能再次打开。"] = "Close this window? Run the script again to reopen it."
+Localization.Portuguese["确定要关闭窗口吗? 关闭后需要重新执行脚本才能再次打开。"] = "Deseja fechar a janela? Para abri-la novamente, será necessário executar o script outra vez."
+LangMap["取消"] = "Cancel"
+Localization.Portuguese["取消"] = "Cancelar"
+LangMap["关闭"] = "Close"
+Localization.Portuguese["关闭"] = "Fechar"
+LangMap["界面已隐藏"] = "Interface hidden"
+Localization.Portuguese["界面已隐藏"] = "Interface oculta"
+LangMap["按 %s 重新打开"] = "Press %s to reopen"
+Localization.Portuguese["按 %s 重新打开"] = "Pressione %s para abrir novamente"
+LangMap["搜索..."] = "Search..."
+Localization.Portuguese["搜索..."] = "Pesquisar..."
+LangMap["匿名用户"] = "Anonymous user"
+Localization.Portuguese["匿名用户"] = "Usuário anônimo"
+
+-- These two labels are composed with explicit separators below.
+LangMap["技能"] = "Skills"
+LangMap[" 蓄力"] = "Charge"
+
+Localization.Maps = { zh = {}, en = LangMap, pt = Localization.Portuguese }
+for key, english in pairs(LangMap) do
+    Localization.Reverse[key] = key
+    Localization.Reverse[english] = key
+    Localization.Reverse[Localization.Portuguese[key]] = key
+end
+
+function Localization.Source(text)
+    return Localization.Reverse[text] or text
+end
+
+function Localization.Translate(text, language)
+    local key = Localization.Source(text)
+    local map = Localization.Maps[language or Localization.Language]
+    if map[key] then return map[key] end
+    if Localization.Reverse[text] then return key end
+    -- Paragraph descriptions can contain an invitation URL on a separate line.
+    return (text:gsub("[^\n]+", function(line)
+        local source = Localization.Source(line)
+        return map[source] or source
+    end))
+end
+
 local function T(text)
-    if not LangEnglish then return text end
-    return LangMap[text] or text
+    return Localization.Translate(text)
+end
+
+-- Register complete, composed labels so switching languages is reversible.
+function Localization.Join(...)
+    local parts = { ... }
+    local variants = {}
+    for _, language in ipairs({ "zh", "en", "pt" }) do
+        local translated = {}
+        for i, part in ipairs(parts) do
+            translated[i] = Localization.Translate(part, language)
+        end
+        variants[language] = table.concat(translated)
+    end
+    local key = variants.zh
+    for language, value in pairs(variants) do
+        Localization.Maps[language][key] = value
+        Localization.Reverse[value] = key
+    end
+    return variants[Localization.Language]
+end
+
+-- Localize displayed labels only: dropdown keys, teams, weapons and regions
+-- retain their original values for callbacks and saved configurations.
+function Localization.Track(root)
+    if not root or Localization.Roots[root] then return end
+    Localization.Roots[root] = true
+    local function watch(instance)
+        if Localization.Tracked[instance] then return end
+        local property
+        if instance:IsA("TextLabel") or instance:IsA("TextButton") then
+            property = "Text"
+        elseif instance:IsA("TextBox") then
+            property = "PlaceholderText"
+        else
+            return
+        end
+        local record = { Property = property, Source = instance[property], Updating = false }
+        Localization.Tracked[instance] = record
+        local function render()
+            if record.Updating then return end
+            record.Source = Localization.Source(instance[property])
+            local translated = T(record.Source)
+            if instance[property] ~= translated then
+                record.Updating = true
+                instance[property] = translated
+                record.Updating = false
+            end
+        end
+        instance:GetPropertyChangedSignal(property):Connect(render)
+        render()
+    end
+    for _, instance in ipairs(root:GetDescendants()) do watch(instance) end
+    root.DescendantAdded:Connect(watch)
+end
+
+function Localization.SetLanguage(value)
+    local language = Localization.Normalize(value)
+    if not language then return end
+    Localization.Language = language
+    if Localization.RefreshLibrary then Localization.RefreshLibrary() end
+    local env = getgenv and getgenv()
+    if type(env) == "table" then env.Language = language end
+    if type(writefile) == "function" then
+        pcall(writefile, Localization.PreferenceFile, language)
+    end
+    for instance, record in pairs(Localization.Tracked) do
+        if instance.Parent then
+            record.Updating = true
+            instance[record.Property] = T(record.Source)
+            record.Updating = false
+        end
+    end
 end
 
 if getgenv and getgenv().AutoBountyMainLoaded and getgenv().AutoBountyMainReady then
@@ -203,8 +511,20 @@ if type(WindUI) ~= "table" or type(WindUI.CreateWindow) ~= "function" then
     return
 end
 
+-- Translate the dependency's own prompts before they are formatted/displayed.
+Localization.LibraryStrings = {}
+for key, value in pairs(WindUI.Strings or {}) do
+    Localization.LibraryStrings[key] = value
+end
+function Localization.RefreshLibrary()
+    for key, value in pairs(Localization.LibraryStrings) do
+        WindUI.Strings[key] = T(value)
+    end
+end
+Localization.RefreshLibrary()
+
 local Window = WindUI:CreateWindow({
-    Title = "Auto Bounty",
+    Title = T("自动赏金"),
     Author = T(".gg/rjrhub"),
     Folder = "AutoBountyMain",
     Size = UDim2.fromOffset(640, 520),
@@ -225,6 +545,9 @@ local Window = WindUI:CreateWindow({
         )
     }
 })
+
+-- Includes the library's close dialog and labels created by dropdown menus.
+Localization.Track(Window.ScreenGui)
 
 local UI = {}
 
@@ -1591,7 +1914,7 @@ end
 local HUD = {}
 
 local function SetupHUD()
-local RE_EXECUTE_URL = "https://rjr-loader.top/script/auto_bounty"
+local RE_EXECUTE_URL = "https://raw.githubusercontent.com/BielZzx9/pdn-o/main/Zzk%27s%20Hub/Auto%20Bounty%20BielZzk"
 local SCRIPT_START_TICK = tick()
 local RunTimeCarry = tonumber(getgenv and getgenv().AutoBountyRunTime) or 0
 local BountyBase = nil
@@ -1681,7 +2004,8 @@ local function CreateInfoPanel()
 
     local labels = {}
 
-    local function MakeColumn(index, title)
+    local function MakeColumn(index, key)
+        local title = T(key)
         local col = Instance.new("Frame")
         col.Name = title
         col.BackgroundTransparency = 1
@@ -1712,12 +2036,13 @@ local function CreateInfoPanel()
         value.TextXAlignment = Enum.TextXAlignment.Left
         value.Parent = col
 
-        labels[title] = value
+        labels[key] = value
         return col
     end
 
-    MakeColumn(1, T("当前赏金"))
-    MakeColumn(2, T("运行时间"))
+    MakeColumn(1, "当前赏金")
+    MakeColumn(2, "运行时间")
+    Localization.Track(gui)
 
     for i = 1, PANEL_COLUMNS - 1 do
         local divider = Instance.new("Frame")
@@ -1747,8 +2072,8 @@ task.spawn(function()
                 if not InfoLabels then return end
             end
             local current = GetMyBounty()
-            SetLabelText(InfoLabels[T("当前赏金")], current and FormatNumber(current) or "-")
-            SetLabelText(InfoLabels[T("运行时间")], FormatRunTime(GetRunTime()))
+            SetLabelText(InfoLabels["当前赏金"], current and FormatNumber(current) or "-")
+            SetLabelText(InfoLabels["运行时间"], FormatRunTime(GetRunTime()))
         end)
         if not ok then
             LastCaughtError = T("信息面板更新异常")
@@ -1758,8 +2083,7 @@ end)
 
 local function BuildReExecuteScript()
     GetEarnedBounty()
-    local env = getgenv and getgenv()
-    local lang = type(env) == "table" and (env.Language or env.language) or nil
+    local lang = Localization.Language
     local parts = { "getgenv().AutoBountyMainLoaded = nil" }
     if type(lang) == "string" and lang ~= "" then
         parts[#parts + 1] = string.format("getgenv().Language = %q", lang)
@@ -1848,7 +2172,7 @@ end
 local function MatchRegion(info)
     if not info then return false end
     local want = tostring(Settings.ServerRegion or "")
-    if want == "" or want == T("随机") or want == "Random" then return true end
+    if want == "" or Localization.Source(want) == "随机" then return true end
     return tostring(info.Region or ""):lower():find(want:lower(), 1, true) ~= nil
 end
 
@@ -3188,7 +3512,7 @@ local function UpdateESPText(p, bill, hum, hrp, myHRP)
         end
         if Settings.ESP_ShowLevel then
             local lv = GetLevel(p) or "???"
-            display = display .. '<font color="#FFFFFF">Lv. ' .. tostring(lv) .. '</font>\n'
+            display = display .. '<font color="#FFFFFF">' .. T("Lv. ") .. tostring(lv) .. '</font>\n'
         end
         if Settings.ESP_ShowPVP then
             if IsPVPEnabled(p) then
@@ -3199,7 +3523,7 @@ local function UpdateESPText(p, bill, hum, hrp, myHRP)
         end
         local line = ""
         if Settings.ESP_ShowHealth then
-            line = '<font color="#FFFFFF">HP: ' .. math.floor(hum.Health) .. "/" .. math.floor(hum.MaxHealth) .. '</font> '
+            line = '<font color="#FFFFFF">' .. T("HP: ") .. math.floor(hum.Health) .. "/" .. math.floor(hum.MaxHealth) .. '</font> '
         end
         if Settings.ESP_ShowDistance and myHRP then
             line = line .. '<font color="#FFFFFF">[' .. math.floor((myHRP.Position - hrp.Position).Magnitude) .. 'm]</font>'
@@ -3280,7 +3604,7 @@ local WeaponSkillKeys = {
 local function AddSkillConfig(weaponTip, title, defaultSkills, idxPrefix)
     local keys = WeaponSkillKeys[weaponTip]
     UI[idxPrefix .. "Skills"] = Tabs.Skills:Dropdown({
-        Title = title .. T("技能"),
+        Title = Localization.Join("技能", " · ", title),
         Values = keys,
         Multi = true,
         AllowNone = true,
@@ -3310,7 +3634,7 @@ local function AddSkillConfig(weaponTip, title, defaultSkills, idxPrefix)
         end
     })
     UI[idxPrefix .. "V4Only"] = Tabs.Skills:Toggle({
-        Title = title .. " · " .. T("V4 后释放"),
+        Title = Localization.Join(title, " · ", "V4 后释放"),
         Desc = T("开启后，本栏所选技能仅在 V4 变身期间释放"),
         Value = Settings.V4Only[weaponTip],
         Callback = function(value) Settings.V4Only[weaponTip] = value == true end
@@ -3319,7 +3643,7 @@ local function AddSkillConfig(weaponTip, title, defaultSkills, idxPrefix)
     for _, key in ipairs(keys) do
         if holds[key] ~= nil then
             UI[idxPrefix .. "Hold" .. key] = Tabs.Skills:Slider({
-                Title = title .. " " .. key .. T(" 蓄力"),
+                Title = Localization.Join(title, " · ", key, " · ", " 蓄力"),
                 Value = { Min = 0.1, Max = 1, Default = holds[key] },
                 Step = 0.1,
                 IsTextbox = true,
@@ -3805,6 +4129,16 @@ UI["FPSBoost"] = Tabs.Settings:Toggle({
 })
 Stay.Performance:SetEnabled(Settings.FPSBoost)
 
+Tabs.Settings:Dropdown({
+    Title = T("界面语言"),
+    Desc = T("语言立即应用并自动保存"),
+    Values = { "简体中文", "English", "Português (Brasil)" },
+    Multi = false,
+    Value = Localization.Names[Localization.Language],
+    AutoSave = false,
+    Callback = function(value) Localization.SetLanguage(value) end
+})
+
 AddSeparator(Tabs.Settings, T("配置保存"))
 
 UI["AutoSaveConfig"] = Tabs.Settings:Toggle({
@@ -3913,7 +4247,7 @@ do
                 clean[key] = value
             end
         end
-        return "getgenv().Config = " .. ToLua(clean, 0)
+        return "getgenv().Language = " .. Quote(Localization.Language) .. "\ngetgenv().Config = " .. ToLua(clean, 0)
     end
 end
 
