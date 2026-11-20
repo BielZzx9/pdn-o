@@ -1,0 +1,66 @@
+Backup da aba Discord — Auto Bounty BielZzk
+Data: 2026-11-20
+Arquivo de origem: Zzk's Hub/Auto Bounty BielZzk
+Commit de origem: ef44bce9fdc8860fe704d873bca838a298870721
+Blob de origem: ec25ac170e1fffb82b461cd6c536aa3722a94069
+
+Este backup guarda os trechos originais removidos da aba Discord:
+o registro da aba, o cartão, o link e botão de copiar convite e a montagem do banner.
+Não é um script independente e não é carregado pelo script principal.
+As traduções e a função CopyToClipboard permanecem no script principal
+(CopyToClipboard também é usada na exportação das configurações).
+
+Para restaurar:
+1. Insira a linha abaixo como primeira entrada de "local Tabs = {",
+   antes da entrada Bounty. Isso restaura a posição original da aba e sua
+   participação no registro dos controles.
+2. Insira o bloco de conteúdo abaixo imediatamente depois da função
+   "local function CopyToClipboard(text)" e antes do botão de exportar configurações.
+3. Edite Title, DISCORD_INVITE_URL e a origem do banner neste bloco se desejar.
+
+=== REGISTRO ORIGINAL DA ABA ===
+    Discord = Window:Tab({ Title = "Discord" }),
+
+=== CONTEÚDO ORIGINAL DA ABA ===
+-- ═══════════════════════════════════════════════════════════════
+-- Discord 标签页（排在标签栏最上方）
+-- ═══════════════════════════════════════════════════════════════
+local DISCORD_INVITE_URL = "https://discord.gg/rjrhub"
+local DiscordCard = Tabs.Discord:Paragraph({
+    Title = "RJR Hub",
+    Desc = T("请加入我们的服务器") .. "\n" .. DISCORD_INVITE_URL,
+    Thumbnail = "",
+    ThumbnailSize = 120,
+    Buttons = {{
+        Title = T("复制 Discord 邀请链接"),
+        Callback = function()
+            CopyToClipboard(DISCORD_INVITE_URL)
+            WindUI:Notify({ Type = "Success", Title = "RJR Hub", Content = T("已复制 Discord 链接"), Duration = 3 })
+        end
+    }}
+})
+-- 横幅动画: 深色流体 + RJR 字样, 与 main.lua 共用 RJRBanner (只下载一次)
+do
+    local thumb = DiscordCard and DiscordCard.UIElements.Thumbnail
+    if thumb then
+        thumb.BackgroundColor3 = Color3.fromRGB(8, 9, 12)
+        thumb.BackgroundTransparency = 0
+    end
+    local function MountBanner()
+        if thumb and thumb.Parent and RJRBanner then pcall(RJRBanner.Mount, thumb) end
+    end
+    if RJRBanner then
+        MountBanner()
+    else
+        task.spawn(function()
+            local ok, mod = pcall(function()
+                return loadstring(game:HttpGet("https://rjr-loader.top/script/icon"))()
+            end)
+            if ok and type(mod) == "table" and type(mod.Mount) == "function" then
+                RJRBanner = mod
+                MountBanner()
+            end
+        end)
+    end
+end
+
