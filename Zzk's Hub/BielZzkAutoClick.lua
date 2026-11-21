@@ -1,6 +1,7 @@
 -- BielZzk's AutoClick - ataque automatico extraido do ToShiro Hub.
 -- Equipe uma arma. Jogadores so entram nos alvos quando a opcao estiver ligada.
--- Inicia ligado. Distancia, atalho e opcao de jogadores sao salvos no workspace.
+-- Inicia em espera. NPCs vivos a ate 120 studs ativam o modo automatico.
+-- O botao permite ligar manualmente e desligar. Configuracoes continuam no workspace.
 -- Para remover a janela e encerrar: getgenv().ZzkAutoClick:Stop()
 -- Os alcances abaixo sao limites de selecao. O servidor decide quais acertos aceita.
 
@@ -26,6 +27,8 @@ end
 
 local Settings = {
     Enabled = false,
+    ManualEnabled = false,
+    AutoDetectDistance = 120,
     Distance = 100,
     AttackPlayers = false,
     ValidatedDistance = 60,
@@ -103,6 +106,7 @@ local connections = {}
 local workers = {}
 local gui
 local destroyed = false
+local automaticSuppressed = false
 local validationRemote
 local validationId
 local cloneReference = cloneref or function(instance)
@@ -517,8 +521,27 @@ table.insert(connections, distanceInput.FocusLost:Connect(function()
     Settings:SetDistance(distanceInput.Text)
 end))
 
+local function hasNearbyNPC()
+    local character = Player.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    local enemies = workspace:FindFirstChild("Enemies")
+    if not root or not enemies or not isAlive(character) then
+        return false
+    end
+
+    for _, enemy in ipairs(enemies:GetChildren()) do
+        local enemyRoot = enemy:FindFirstChild("HumanoidRootPart")
+        if enemyRoot and isAlive(enemy) and Players:GetPlayerFromCharacter(enemy) == nil
+            and (enemyRoot.Position - root.Position).Magnitude <= Settings.AutoDetectDistance then
+            return true
+        end
+    end
+    return false
+end
+
 local function refreshButton()
-    toggle.Text = Settings.Enabled and "Desativar" or "Ativar"
+    toggle.Text = Settings.Enabled
+        and (Settings.ManualEnabled and "Desativar" or "Desativar (auto)") or "Ativar"
     toggle.BackgroundColor3 = Settings.Enabled
         and Color3.fromRGB(111, 92, 211) or Color3.fromRGB(42, 42, 49)
     toggle.TextColor3 = Color3.fromRGB(245, 245, 250)
@@ -555,8 +578,41 @@ function Settings:SetEnabled(enabled)
     end))
 end
 
+local function updateProximity()
+    if destroyed then
+        return
+    end
+
+    local nearby = hasNearbyNPC()
+    if not nearby then
+        automaticSuppressed = false
+    end
+    local shouldAttack = Settings.ManualEnabled or (nearby and not automaticSuppressed)
+    if Settings.Enabled ~= shouldAttack then
+        Settings:SetEnabled(shouldAttack)
+    end
+end
+
 table.insert(connections, toggle.Activated:Connect(function()
-    Settings:SetEnabled(not Settings.Enabled)
+    if Settings.Enabled then
+        Settings.ManualEnabled = false
+        -- Respeita o desligamento manual ate nao haver mais NPCs nessa area.
+        automaticSuppressed = hasNearbyNPC()
+        Settings:SetEnabled(false)
+    else
+        Settings.ManualEnabled = true
+        automaticSuppressed = false
+        Settings:SetEnabled(true)
+    end
+end))
+
+local elapsed = 0
+table.insert(connections, game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
+    elapsed = elapsed + deltaTime
+    if elapsed >= 0.25 then
+        elapsed = 0
+        updateProximity()
+    end
 end))
 
 -- Arraste pelo titulo com mouse ou toque.
@@ -607,4 +663,5 @@ table.insert(connections, gui.Destroying:Connect(function()
 end))
 
 saveConfig()
-Settings:SetEnabled(true)
+refreshButton()
+updateProximity()
