@@ -1,6 +1,6 @@
 -- BielZzk's AutoClick - ataque automatico extraido do ToShiro Hub.
 -- Equipe uma arma. As duas rotinas originais selecionam NPCs e jogadores.
--- Inicia ligado. O atalho escolhido esconde/mostra somente a interface.
+-- Inicia ligado. Distancia e atalho sao restaurados de BielZzkAutoClick.json no workspace.
 -- Para remover a janela e encerrar: getgenv().ZzkAutoClick:Stop()
 -- Os alcances abaixo sao limites de selecao. O servidor decide quais acertos aceita.
 
@@ -8,6 +8,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Player = Players.LocalPlayer
 local environment = getgenv()
+local HttpService = game:GetService("HttpService")
 
 local Modules = ReplicatedStorage:WaitForChild("Modules", 10)
 local Net = Modules and Modules:WaitForChild("Net", 10)
@@ -31,6 +32,66 @@ local Settings = {
     ValidatedInterval = 0.01,
     GuiKey = Enum.KeyCode.F1,
 }
+
+local ConfigPath = "BielZzkAutoClick.json"
+
+local function loadConfig()
+    if type(readfile) ~= "function" then
+        return
+    end
+
+    local success, data = pcall(function()
+        if type(isfile) == "function" and not isfile(ConfigPath) then
+            return nil
+        end
+        return HttpService:JSONDecode(readfile(ConfigPath))
+    end)
+
+    if not success then
+        warn("[Zzk] Nao foi possivel ler a configuracao; usando os valores padrao.")
+        return
+    end
+    if type(data) ~= "table" then
+        return
+    end
+
+    local distance = tonumber(data.Distance)
+    if distance and distance == distance and distance ~= math.huge and distance ~= -math.huge then
+        Settings.Distance = math.clamp(math.floor(distance + 0.5), 1, 100)
+        Settings.ValidatedDistance = math.min(60, Settings.Distance)
+    end
+
+    if type(data.GuiKey) == "string" then
+        local valid, key = pcall(function()
+            return Enum.KeyCode[data.GuiKey]
+        end)
+        if valid and key and key ~= Enum.KeyCode.Unknown and key ~= Enum.KeyCode.Escape
+            and key.Value < 1000 then
+            Settings.GuiKey = key
+        end
+    end
+end
+
+local function saveConfig()
+    if type(writefile) ~= "function" then
+        warn("[Zzk] O executor nao disponibiliza writefile para salvar a configuracao.")
+        return false
+    end
+
+    local success = pcall(function()
+        writefile(ConfigPath, HttpService:JSONEncode({
+            Version = 1,
+            Distance = Settings.Distance,
+            GuiKey = Settings.GuiKey.Name,
+        }))
+    end)
+    if not success then
+        warn("[Zzk] Nao foi possivel salvar a configuracao no workspace.")
+    end
+    return success
+end
+
+loadConfig()
 
 local connections = {}
 local workers = {}
@@ -352,6 +413,7 @@ table.insert(connections, UserInputService.InputBegan:Connect(function(input)
         choosingKey = false
         if input.KeyCode ~= Enum.KeyCode.Escape then
             Settings.GuiKey = input.KeyCode
+            saveConfig()
         end
         keyButton.Text = Settings.GuiKey.Name
         return
@@ -377,6 +439,7 @@ function Settings:SetDistance(value)
     self.Distance = math.clamp(math.floor(distance + 0.5), 1, 100)
     self.ValidatedDistance = math.min(60, self.Distance)
     distanceInput.Text = tostring(self.Distance)
+    saveConfig()
 
     -- Cancela registros em andamento para o novo limite valer no proximo ciclo.
     if self.Enabled then
@@ -477,4 +540,5 @@ table.insert(connections, gui.Destroying:Connect(function()
     Settings:Stop()
 end))
 
+saveConfig()
 Settings:SetEnabled(true)
