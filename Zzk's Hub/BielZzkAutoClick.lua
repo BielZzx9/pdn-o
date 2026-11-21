@@ -1,6 +1,6 @@
 -- BielZzk's AutoClick - ataque automatico extraido do ToShiro Hub.
--- Equipe uma arma. As duas rotinas originais selecionam NPCs e jogadores.
--- Inicia ligado. Distancia e atalho sao restaurados de BielZzkAutoClick.json no workspace.
+-- Equipe uma arma. Jogadores so entram nos alvos quando a opcao estiver ligada.
+-- Inicia ligado. Distancia, atalho e opcao de jogadores sao salvos no workspace.
 -- Para remover a janela e encerrar: getgenv().ZzkAutoClick:Stop()
 -- Os alcances abaixo sao limites de selecao. O servidor decide quais acertos aceita.
 
@@ -27,6 +27,7 @@ end
 local Settings = {
     Enabled = false,
     Distance = 100,
+    AttackPlayers = false,
     ValidatedDistance = 60,
     ClickDelay = 0,
     ValidatedInterval = 0.01,
@@ -53,6 +54,10 @@ local function loadConfig()
     end
     if type(data) ~= "table" then
         return
+    end
+
+    if type(data.AttackPlayers) == "boolean" then
+        Settings.AttackPlayers = data.AttackPlayers
     end
 
     local distance = tonumber(data.Distance)
@@ -82,6 +87,7 @@ local function saveConfig()
         writefile(ConfigPath, HttpService:JSONEncode({
             Version = 1,
             Distance = Settings.Distance,
+            AttackPlayers = Settings.AttackPlayers,
             GuiKey = Settings.GuiKey.Name,
         }))
     end)
@@ -158,6 +164,10 @@ local function isAlive(character)
     return humanoid and humanoid.Health > 0
 end
 
+local function canTarget(character)
+    return Settings.AttackPlayers or Players:GetPlayerFromCharacter(character) == nil
+end
+
 -- Primeira rotina do hub: ataque, partes dos alvos e registro validado.
 local function validatedAttack()
     local character = Player.Character
@@ -175,10 +185,10 @@ local function validatedAttack()
     local targets = {}
     for _, folderName in ipairs({ "Enemies", "Characters" }) do
         local folder = workspace:FindFirstChild(folderName)
-        if folder then
+        if folder and (folderName ~= "Characters" or Settings.AttackPlayers) then
             for _, enemy in ipairs(folder:GetChildren()) do
                 local enemyRoot = enemy:FindFirstChild("HumanoidRootPart")
-                if enemy ~= character and enemyRoot and isAlive(enemy)
+                if enemy ~= character and enemyRoot and isAlive(enemy) and canTarget(enemy)
                     and (enemyRoot.Position - root.Position).Magnitude <= Settings.ValidatedDistance then
                     for _, part in ipairs(enemy:GetChildren()) do
                         if part:IsA("BasePart") then
@@ -226,7 +236,7 @@ local function collectHeads(targets, folder)
     if folder then
         for _, enemy in ipairs(folder:GetChildren()) do
             local head = enemy:FindFirstChild("Head")
-            if enemy ~= Player.Character and head and isAlive(enemy)
+            if enemy ~= Player.Character and head and isAlive(enemy) and canTarget(enemy)
                 and Player:DistanceFromCharacter(head.Position) < Settings.Distance then
                 targets[#targets + 1] = { enemy, head }
                 lastHead = head
@@ -245,7 +255,10 @@ local function fastAttack()
 
     local targets = {}
     local enemyHead = collectHeads(targets, workspace:FindFirstChild("Enemies"))
-    local playerHead = collectHeads(targets, workspace:FindFirstChild("Characters"))
+    local playerHead
+    if Settings.AttackPlayers then
+        playerHead = collectHeads(targets, workspace:FindFirstChild("Characters"))
+    end
     if #targets == 0 then
         return
     end
@@ -290,7 +303,7 @@ gui.Parent = gethui and gethui() or Player:WaitForChild("PlayerGui")
 
 local panel = Instance.new("Frame")
 panel.Name = "Panel"
-panel.Size = UDim2.fromOffset(190, 114)
+panel.Size = UDim2.fromOffset(190, 140)
 panel.Position = UDim2.new(0.5, -95, 0.3, 0)
 panel.BackgroundColor3 = Color3.fromRGB(21, 21, 24)
 panel.BorderSizePixel = 0
@@ -423,6 +436,59 @@ table.insert(connections, UserInputService.InputBegan:Connect(function(input)
         gui.Enabled = not gui.Enabled
     end
 end))
+
+local playersLabel = Instance.new("TextLabel")
+playersLabel.Name = "PlayersLabel"
+playersLabel.Size = UDim2.fromOffset(90, 22)
+playersLabel.Position = UDim2.fromOffset(8, 110)
+playersLabel.BackgroundTransparency = 1
+playersLabel.Text = "Jogadores"
+playersLabel.TextColor3 = Color3.fromRGB(202, 202, 213)
+playersLabel.Font = Enum.Font.Gotham
+playersLabel.TextSize = 11
+playersLabel.TextXAlignment = Enum.TextXAlignment.Left
+playersLabel.Parent = panel
+
+local playersButton = Instance.new("TextButton")
+playersButton.Name = "PlayersButton"
+playersButton.Size = UDim2.fromOffset(78, 22)
+playersButton.Position = UDim2.fromOffset(104, 110)
+playersButton.BorderSizePixel = 0
+playersButton.Font = Enum.Font.GothamMedium
+playersButton.TextSize = 11
+playersButton.TextColor3 = Color3.fromRGB(245, 245, 250)
+playersButton.AutoButtonColor = true
+playersButton.Parent = panel
+
+local playersCorner = Instance.new("UICorner")
+playersCorner.CornerRadius = UDim.new(0, 7)
+playersCorner.Parent = playersButton
+
+local function refreshPlayersButton()
+    playersButton.Text = Settings.AttackPlayers and "Ligado" or "Desligado"
+    playersButton.BackgroundColor3 = Settings.AttackPlayers
+        and Color3.fromRGB(111, 92, 211) or Color3.fromRGB(42, 42, 49)
+end
+
+function Settings:SetAttackPlayers(enabled)
+    if destroyed then
+        return
+    end
+    self.AttackPlayers = enabled == true
+    refreshPlayersButton()
+    saveConfig()
+
+    -- Cancela alvos de jogadores ja coletados por um registro ainda em andamento.
+    if self.Enabled then
+        self:SetEnabled(true)
+    end
+end
+
+table.insert(connections, playersButton.Activated:Connect(function()
+    Settings:SetAttackPlayers(not Settings.AttackPlayers)
+end))
+
+refreshPlayersButton()
 
 -- O limite escolhido restringe ambas as rotinas sem aumentar seus alcances originais.
 function Settings:SetDistance(value)
