@@ -1,6 +1,6 @@
 -- BielZzk's AutoClick - ataque automatico extraido do ToShiro Hub.
 -- Equipe uma arma. Jogadores so entram nos alvos quando a opcao estiver ligada.
--- Inicia em espera. NPCs vivos a ate 120 studs ativam o modo automatico.
+-- Inicia em espera. Raio automatico ajustavel, com padrao de 120 studs.
 -- O botao permite ligar manualmente e desligar. Configuracoes continuam no workspace.
 -- Para remover a janela e encerrar: getgenv().ZzkAutoClick:Stop()
 -- Os alcances abaixo sao limites de selecao. O servidor decide quais acertos aceita.
@@ -63,6 +63,11 @@ local function loadConfig()
         Settings.AttackPlayers = data.AttackPlayers
     end
 
+    local autoRadius = tonumber(data.AutoDetectDistance)
+    if autoRadius and autoRadius == autoRadius and autoRadius ~= math.huge and autoRadius ~= -math.huge then
+        Settings.AutoDetectDistance = math.max(1, math.floor(autoRadius + 0.5))
+    end
+
     local distance = tonumber(data.Distance)
     if distance and distance == distance and distance ~= math.huge and distance ~= -math.huge then
         Settings.Distance = math.clamp(math.floor(distance + 0.5), 1, 100)
@@ -90,6 +95,7 @@ local function saveConfig()
         writefile(ConfigPath, HttpService:JSONEncode({
             Version = 1,
             Distance = Settings.Distance,
+            AutoDetectDistance = Settings.AutoDetectDistance,
             AttackPlayers = Settings.AttackPlayers,
             GuiKey = Settings.GuiKey.Name,
         }))
@@ -307,7 +313,7 @@ gui.Parent = gethui and gethui() or Player:WaitForChild("PlayerGui")
 
 local panel = Instance.new("Frame")
 panel.Name = "Panel"
-panel.Size = UDim2.fromOffset(190, 140)
+panel.Size = UDim2.fromOffset(190, 166)
 panel.Position = UDim2.new(0.5, -95, 0.3, 0)
 panel.BackgroundColor3 = Color3.fromRGB(21, 21, 24)
 panel.BorderSizePixel = 0
@@ -493,6 +499,55 @@ table.insert(connections, playersButton.Activated:Connect(function()
 end))
 
 refreshPlayersButton()
+
+local autoRadiusLabel = Instance.new("TextLabel")
+autoRadiusLabel.Name = "AutoRadiusLabel"
+autoRadiusLabel.Size = UDim2.fromOffset(114, 22)
+autoRadiusLabel.Position = UDim2.fromOffset(8, 136)
+autoRadiusLabel.BackgroundTransparency = 1
+autoRadiusLabel.Text = "Raio auto (studs)"
+autoRadiusLabel.TextColor3 = Color3.fromRGB(202, 202, 213)
+autoRadiusLabel.Font = Enum.Font.Gotham
+autoRadiusLabel.TextSize = 11
+autoRadiusLabel.TextXAlignment = Enum.TextXAlignment.Left
+autoRadiusLabel.Parent = panel
+
+local autoRadiusInput = Instance.new("TextBox")
+autoRadiusInput.Name = "AutoRadiusInput"
+autoRadiusInput.Size = UDim2.fromOffset(54, 22)
+autoRadiusInput.Position = UDim2.fromOffset(128, 136)
+autoRadiusInput.BackgroundColor3 = Color3.fromRGB(42, 42, 49)
+autoRadiusInput.BorderSizePixel = 0
+autoRadiusInput.Font = Enum.Font.GothamMedium
+autoRadiusInput.TextSize = 12
+autoRadiusInput.TextColor3 = Color3.fromRGB(245, 245, 250)
+autoRadiusInput.Text = tostring(Settings.AutoDetectDistance)
+autoRadiusInput.ClearTextOnFocus = false
+autoRadiusInput.Parent = panel
+
+local autoRadiusCorner = Instance.new("UICorner")
+autoRadiusCorner.CornerRadius = UDim.new(0, 7)
+autoRadiusCorner.Parent = autoRadiusInput
+
+function Settings:SetAutoDetectDistance(value)
+    if destroyed then
+        return
+    end
+
+    local radius = tonumber(value)
+    if not radius or radius ~= radius or radius == math.huge or radius == -math.huge then
+        autoRadiusInput.Text = tostring(self.AutoDetectDistance)
+        return
+    end
+
+    self.AutoDetectDistance = math.max(1, math.floor(radius + 0.5))
+    autoRadiusInput.Text = tostring(self.AutoDetectDistance)
+    saveConfig()
+end
+
+table.insert(connections, autoRadiusInput.FocusLost:Connect(function()
+    Settings:SetAutoDetectDistance(autoRadiusInput.Text)
+end))
 
 -- O limite escolhido restringe ambas as rotinas sem aumentar seus alcances originais.
 function Settings:SetDistance(value)
