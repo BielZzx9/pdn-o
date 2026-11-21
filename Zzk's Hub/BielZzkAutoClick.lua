@@ -1,6 +1,6 @@
 -- BielZzk's AutoClick - ataque automatico extraido do ToShiro Hub.
 -- Equipe uma arma. As duas rotinas originais selecionam NPCs e jogadores.
--- Inicia ligado. Use o botao para ligar/desligar e o campo para limitar a distancia.
+-- Inicia ligado. O atalho escolhido esconde/mostra somente a interface.
 -- Para remover a janela e encerrar: getgenv().ZzkAutoClick:Stop()
 -- Os alcances abaixo sao limites de selecao. O servidor decide quais acertos aceita.
 
@@ -29,6 +29,7 @@ local Settings = {
     ValidatedDistance = 60,
     ClickDelay = 0,
     ValidatedInterval = 0.01,
+    GuiKey = Enum.KeyCode.F1,
 }
 
 local connections = {}
@@ -217,7 +218,7 @@ local function runAttack(callback)
     end
 end
 
--- GUI pequena com apenas um botao.
+-- GUI compacta com controle de distancia e atalho para esconder/mostrar.
 local UserInputService = game:GetService("UserInputService")
 gui = Instance.new("ScreenGui")
 gui.Name = "BielZzkAutoClick"
@@ -228,14 +229,14 @@ gui.Parent = gethui and gethui() or Player:WaitForChild("PlayerGui")
 
 local panel = Instance.new("Frame")
 panel.Name = "Panel"
-panel.Size = UDim2.fromOffset(238, 126)
-panel.Position = UDim2.new(0.5, -119, 0.3, 0)
+panel.Size = UDim2.fromOffset(190, 114)
+panel.Position = UDim2.new(0.5, -95, 0.3, 0)
 panel.BackgroundColor3 = Color3.fromRGB(21, 21, 24)
 panel.BorderSizePixel = 0
 panel.Parent = gui
 
 local panelCorner = Instance.new("UICorner")
-panelCorner.CornerRadius = UDim.new(0, 12)
+panelCorner.CornerRadius = UDim.new(0, 10)
 panelCorner.Parent = panel
 
 local outline = Instance.new("UIStroke")
@@ -245,51 +246,51 @@ outline.Parent = panel
 
 local title = Instance.new("TextLabel")
 title.Name = "Title"
-title.Size = UDim2.new(1, -24, 0, 30)
-title.Position = UDim2.fromOffset(12, 3)
+title.Size = UDim2.new(1, -16, 0, 22)
+title.Position = UDim2.fromOffset(8, 2)
 title.BackgroundTransparency = 1
 title.Text = "BielZzk's AutoClick"
 title.TextColor3 = Color3.fromRGB(242, 242, 247)
 title.Font = Enum.Font.GothamMedium
-title.TextSize = 14
+title.TextSize = 12
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Active = true
 title.Parent = panel
 
 local toggle = Instance.new("TextButton")
 toggle.Name = "Toggle"
-toggle.Size = UDim2.new(1, -24, 0, 33)
-toggle.Position = UDim2.fromOffset(12, 41)
+toggle.Size = UDim2.new(1, -16, 0, 26)
+toggle.Position = UDim2.fromOffset(8, 27)
 toggle.BorderSizePixel = 0
 toggle.Font = Enum.Font.GothamMedium
-toggle.TextSize = 13
+toggle.TextSize = 12
 toggle.AutoButtonColor = true
 toggle.Parent = panel
 
 local buttonCorner = Instance.new("UICorner")
-buttonCorner.CornerRadius = UDim.new(0, 9)
+buttonCorner.CornerRadius = UDim.new(0, 8)
 buttonCorner.Parent = toggle
 
 local distanceLabel = Instance.new("TextLabel")
 distanceLabel.Name = "DistanceLabel"
-distanceLabel.Size = UDim2.fromOffset(145, 28)
-distanceLabel.Position = UDim2.fromOffset(12, 86)
+distanceLabel.Size = UDim2.fromOffset(114, 22)
+distanceLabel.Position = UDim2.fromOffset(8, 58)
 distanceLabel.BackgroundTransparency = 1
 distanceLabel.Text = "Distancia (studs)"
 distanceLabel.TextColor3 = Color3.fromRGB(202, 202, 213)
 distanceLabel.Font = Enum.Font.Gotham
-distanceLabel.TextSize = 12
+distanceLabel.TextSize = 11
 distanceLabel.TextXAlignment = Enum.TextXAlignment.Left
 distanceLabel.Parent = panel
 
 local distanceInput = Instance.new("TextBox")
 distanceInput.Name = "DistanceInput"
-distanceInput.Size = UDim2.fromOffset(60, 28)
-distanceInput.Position = UDim2.fromOffset(166, 86)
+distanceInput.Size = UDim2.fromOffset(54, 22)
+distanceInput.Position = UDim2.fromOffset(128, 58)
 distanceInput.BackgroundColor3 = Color3.fromRGB(42, 42, 49)
 distanceInput.BorderSizePixel = 0
 distanceInput.Font = Enum.Font.GothamMedium
-distanceInput.TextSize = 13
+distanceInput.TextSize = 12
 distanceInput.TextColor3 = Color3.fromRGB(245, 245, 250)
 distanceInput.Text = tostring(Settings.Distance)
 distanceInput.ClearTextOnFocus = false
@@ -298,6 +299,68 @@ distanceInput.Parent = panel
 local inputCorner = Instance.new("UICorner")
 inputCorner.CornerRadius = UDim.new(0, 8)
 inputCorner.Parent = distanceInput
+
+local keyLabel = Instance.new("TextLabel")
+keyLabel.Name = "GuiKeyLabel"
+keyLabel.Size = UDim2.fromOffset(90, 22)
+keyLabel.Position = UDim2.fromOffset(8, 84)
+keyLabel.BackgroundTransparency = 1
+keyLabel.Text = "Ocultar GUI"
+keyLabel.TextColor3 = Color3.fromRGB(202, 202, 213)
+keyLabel.Font = Enum.Font.Gotham
+keyLabel.TextSize = 11
+keyLabel.TextXAlignment = Enum.TextXAlignment.Left
+keyLabel.Parent = panel
+
+local keyButton = Instance.new("TextButton")
+keyButton.Name = "GuiKeyButton"
+keyButton.Size = UDim2.fromOffset(78, 22)
+keyButton.Position = UDim2.fromOffset(104, 84)
+keyButton.BackgroundColor3 = Color3.fromRGB(42, 42, 49)
+keyButton.BorderSizePixel = 0
+keyButton.Font = Enum.Font.GothamMedium
+keyButton.TextSize = 11
+keyButton.TextScaled = true
+keyButton.TextColor3 = Color3.fromRGB(245, 245, 250)
+keyButton.Text = Settings.GuiKey.Name
+keyButton.AutoButtonColor = true
+keyButton.Parent = panel
+
+local keyCorner = Instance.new("UICorner")
+keyCorner.CornerRadius = UDim.new(0, 7)
+keyCorner.Parent = keyButton
+
+local keyTextSize = Instance.new("UITextSizeConstraint")
+keyTextSize.MinTextSize = 8
+keyTextSize.MaxTextSize = 11
+keyTextSize.Parent = keyButton
+
+local choosingKey = false
+table.insert(connections, keyButton.Activated:Connect(function()
+    choosingKey = not choosingKey
+    keyButton.Text = choosingKey and "Tecla..." or Settings.GuiKey.Name
+end))
+
+-- O evento pertence ao UserInputService e continua recebendo a tecla com a GUI desativada.
+table.insert(connections, UserInputService.InputBegan:Connect(function(input)
+    if destroyed or input.UserInputType ~= Enum.UserInputType.Keyboard
+        or input.KeyCode == Enum.KeyCode.Unknown or UserInputService:GetFocusedTextBox() then
+        return
+    end
+
+    if choosingKey then
+        choosingKey = false
+        if input.KeyCode ~= Enum.KeyCode.Escape then
+            Settings.GuiKey = input.KeyCode
+        end
+        keyButton.Text = Settings.GuiKey.Name
+        return
+    end
+
+    if input.KeyCode == Settings.GuiKey then
+        gui.Enabled = not gui.Enabled
+    end
+end))
 
 -- O limite escolhido restringe ambas as rotinas sem aumentar seus alcances originais.
 function Settings:SetDistance(value)
