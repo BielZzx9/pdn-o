@@ -1,6 +1,6 @@
 -- BielZzk's AutoClick - ataque automatico extraido do ToShiro Hub.
 -- Equipe uma arma. As duas rotinas originais selecionam NPCs e jogadores.
--- Use o unico botao da janela para ligar/desligar.
+-- Inicia ligado. Use o botao para ligar/desligar e o campo para limitar a distancia.
 -- Para remover a janela e encerrar: getgenv().ZzkAutoClick:Stop()
 -- Os alcances abaixo sao limites de selecao. O servidor decide quais acertos aceita.
 
@@ -228,7 +228,7 @@ gui.Parent = gethui and gethui() or Player:WaitForChild("PlayerGui")
 
 local panel = Instance.new("Frame")
 panel.Name = "Panel"
-panel.Size = UDim2.fromOffset(238, 86)
+panel.Size = UDim2.fromOffset(238, 126)
 panel.Position = UDim2.new(0.5, -119, 0.3, 0)
 panel.BackgroundColor3 = Color3.fromRGB(21, 21, 24)
 panel.BorderSizePixel = 0
@@ -269,6 +269,61 @@ toggle.Parent = panel
 local buttonCorner = Instance.new("UICorner")
 buttonCorner.CornerRadius = UDim.new(0, 9)
 buttonCorner.Parent = toggle
+
+local distanceLabel = Instance.new("TextLabel")
+distanceLabel.Name = "DistanceLabel"
+distanceLabel.Size = UDim2.fromOffset(145, 28)
+distanceLabel.Position = UDim2.fromOffset(12, 86)
+distanceLabel.BackgroundTransparency = 1
+distanceLabel.Text = "Distancia (studs)"
+distanceLabel.TextColor3 = Color3.fromRGB(202, 202, 213)
+distanceLabel.Font = Enum.Font.Gotham
+distanceLabel.TextSize = 12
+distanceLabel.TextXAlignment = Enum.TextXAlignment.Left
+distanceLabel.Parent = panel
+
+local distanceInput = Instance.new("TextBox")
+distanceInput.Name = "DistanceInput"
+distanceInput.Size = UDim2.fromOffset(60, 28)
+distanceInput.Position = UDim2.fromOffset(166, 86)
+distanceInput.BackgroundColor3 = Color3.fromRGB(42, 42, 49)
+distanceInput.BorderSizePixel = 0
+distanceInput.Font = Enum.Font.GothamMedium
+distanceInput.TextSize = 13
+distanceInput.TextColor3 = Color3.fromRGB(245, 245, 250)
+distanceInput.Text = tostring(Settings.Distance)
+distanceInput.ClearTextOnFocus = false
+distanceInput.Parent = panel
+
+local inputCorner = Instance.new("UICorner")
+inputCorner.CornerRadius = UDim.new(0, 8)
+inputCorner.Parent = distanceInput
+
+-- O limite escolhido restringe ambas as rotinas sem aumentar seus alcances originais.
+function Settings:SetDistance(value)
+    if destroyed then
+        return
+    end
+
+    local distance = tonumber(value)
+    if not distance or distance ~= distance or distance == math.huge or distance == -math.huge then
+        distanceInput.Text = tostring(self.Distance)
+        return
+    end
+
+    self.Distance = math.clamp(math.floor(distance + 0.5), 1, 100)
+    self.ValidatedDistance = math.min(60, self.Distance)
+    distanceInput.Text = tostring(self.Distance)
+
+    -- Cancela registros em andamento para o novo limite valer no proximo ciclo.
+    if self.Enabled then
+        self:SetEnabled(true)
+    end
+end
+
+table.insert(connections, distanceInput.FocusLost:Connect(function()
+    Settings:SetDistance(distanceInput.Text)
+end))
 
 local function refreshButton()
     toggle.Text = Settings.Enabled and "Desativar" or "Ativar"
@@ -359,4 +414,4 @@ table.insert(connections, gui.Destroying:Connect(function()
     Settings:Stop()
 end))
 
-refreshButton()
+Settings:SetEnabled(true)
